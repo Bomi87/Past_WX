@@ -231,7 +231,7 @@ function extractVisibilityMeters(report){
   if (/\bCAVOK\b/.test(txt)) values.push(9999);
   if (/\bP6SM\b/.test(txt)) values.push(9999);
 
-  // 혼합분수: 2 1/2SM
+  // 혼합분수: 1 1/2SM, 2 1/2SM
   const mixedFracMatches = txt.matchAll(/\b(\d+)\s+(\d+)\/(\d+)SM\b/g);
   for (const m of mixedFracMatches) {
     const whole = Number(m[1]);
@@ -248,7 +248,7 @@ function extractVisibilityMeters(report){
     if (den > 0) values.push(Math.round((num / den) * 1609.34));
   }
 
-  // 1/2SM
+  // 순수 분수: 1/2SM
   const fracMatches = txt.matchAll(/\b(\d+)\/(\d+)SM\b/g);
   for (const m of fracMatches) {
     const start = m.index ?? -1;
@@ -261,13 +261,13 @@ function extractVisibilityMeters(report){
     if (den > 0) values.push(Math.round((num / den) * 1609.34));
   }
 
-  // 2SM, 6SM
+  // 정수: 1SM, 2SM, 6SM
   const wholeMatches = txt.matchAll(/\b(\d+)SM\b/g);
   for (const m of wholeMatches) {
     const start = m.index ?? -1;
     if (start > 0) {
-      const prevChunk = txt.slice(Math.max(0, start - 4), start);
-      if (/\d\/\d\s*$/.test(prevChunk) || /M\s*$/.test(prevChunk)) continue;
+      const prevChunk = txt.slice(Math.max(0, start - 6), start);
+      if (/\d+\s+\d+\/\d+\s*$/.test(prevChunk) || /\d\/\d\s*$/.test(prevChunk) || /M\s*$/.test(prevChunk)) continue;
     }
     values.push(Math.round(Number(m[1]) * 1609.34));
   }
@@ -278,7 +278,7 @@ function extractVisibilityMeters(report){
     values.push(Number(m[1]));
   }
 
-  // prevailing visibility 9999 / 0800 / 3000 ...
+  // prevailing visibility(미터형)
   const prevailingMatch = txt.match(
     /\b(?:METAR|SPECI)\s+[A-Z0-9]{4}\s+\d{6}Z\s+(?:\d{3}|VRB)\d{2,3}(?:G\d{2,3})?(?:KT|MPS)(?:\s+\d{3}V\d{3})?\s+(\d{4})\b/
   );
@@ -289,7 +289,6 @@ function extractVisibilityMeters(report){
   if (!values.length) return '';
   return Math.min(...values);
 }
-
 /* =========================
    WIND
 ========================= */
@@ -391,7 +390,7 @@ function renderRows(rows){
   }
 
   body.innerHTML = rows.map((r,i)=>{
-    const visRaw = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : extractVisibilityMeters(r.report);
+    const visRaw = extractVisibilityMeters(r.report);
 
     const windToken = extractWindToken(r.report);
     const windInfo = parseWindInfo(windToken);

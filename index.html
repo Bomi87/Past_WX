@@ -309,8 +309,8 @@ const wind = windRaw === '' ? '' : windRaw + 'kt';
     return `
       <tr>
         <td>${i+1}</td>
-        <td>${escapeHtml(r.utcDate || '')}</td>
-        <td>${escapeHtml(r.utcTime || '')}</td>
+       <td style="white-space:nowrap;">${escapeHtml(r.utcDate || '')}</td>
+        <td style="white-space:nowrap;">${escapeHtml(r.utcTime || '')}</td>
         <td class="mono">${escapeHtml(r.report || '')}</td>
         <td style="background:${visColor};">${escapeHtml(vis)}</td>
         <td style="background:${windColor};">${escapeHtml(wind)}</td>

@@ -5,406 +5,252 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Past WX Search</title>
   <style>
-    :root {
-      --bg: #f4f7fb;
-      --card: #ffffff;
-      --line: #d9e2ec;
-      --text: #243b53;
-      --muted: #627d98;
-      --accent: #1565c0;
-      --accent2: #0d47a1;
-      --ok: #137333;
-      --err: #c62828;
-      --warn: #b26a00;
-    }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      font-family: Arial, Helvetica, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-    }
-    .wrap {
-      max-width: 1180px;
-      margin: 24px auto;
-      padding: 0 16px;
-    }
-    .card {
-      background: var(--card);
-      border: 1px solid var(--line);
-      border-radius: 16px;
-      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.06);
-      padding: 18px;
-      margin-bottom: 16px;
-    }
-    h1 {
-      margin: 0 0 8px;
-      font-size: 28px;
-    }
-    .sub {
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.5;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(6, minmax(120px, 1fr));
-      gap: 12px;
-      align-items: end;
-    }
-    .field label {
-      display: block;
-      font-size: 13px;
-      color: var(--muted);
-      margin-bottom: 6px;
-      font-weight: 700;
-    }
-    .field input,
-    .field select {
-      width: 100%;
-      height: 42px;
-      border: 1px solid var(--line);
-      border-radius: 10px;
-      padding: 0 12px;
-      font-size: 15px;
-      background: #fff;
-    }
-    .actions {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      margin-top: 14px;
-    }
-    button {
-      border: 0;
-      border-radius: 10px;
-      padding: 11px 16px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-    .primary { background: var(--accent); color: #fff; }
-    .primary:hover { background: var(--accent2); }
-    .secondary { background: #eef4ff; color: var(--accent2); }
-    .secondary:hover { background: #ddeaff; }
-    .status {
-      margin-top: 12px;
-      padding: 12px 14px;
-      border-radius: 10px;
-      background: #eef3f8;
-      color: var(--text);
-      font-size: 14px;
-      white-space: pre-wrap;
-      display: none;
-    }
-    .status.ok { display:block; background: #edf7ee; color: var(--ok); }
-    .status.error { display:block; background: #fdeeee; color: var(--err); }
-    .status.warn { display:block; background: #fff6e5; color: var(--warn); }
-    .status.info { display:block; }
-    .meta {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-    .table-wrap {
-      overflow: auto;
-      border: 1px solid var(--line);
-      border-radius: 12px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 920px;
-      background: white;
-    }
-    thead th {
-      position: sticky;
-      top: 0;
-      background: #f7fafc;
-      z-index: 1;
-    }
-    th, td {
-      border-bottom: 1px solid var(--line);
-      padding: 10px 12px;
-      text-align: left;
-      font-size: 14px;
-      vertical-align: top;
-    }
-    tbody tr:hover { background: #fafcff; }
-    .right { text-align: right; }
-    .mono { font-family: Consolas, Monaco, monospace; }
-    .pill {
-      display: inline-block;
-      border-radius: 999px;
-      padding: 4px 10px;
-      font-size: 12px;
-      font-weight: 700;
-      background: #eef4ff;
-      color: var(--accent2);
-    }
-    @media (max-width: 900px) {
-      .grid { grid-template-columns: repeat(2, minmax(140px, 1fr)); }
-    }
-    @media (max-width: 560px) {
-      .grid { grid-template-columns: 1fr; }
-      h1 { font-size: 24px; }
-    }
+    body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;padding:24px;color:#243b53}
+    .wrap{max-width:1180px;margin:0 auto}
+    .card{background:#fff;border:1px solid #d9e2ec;border-radius:16px;padding:18px;margin-bottom:16px}
+    .grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:12px}
+    .field label{display:block;font-size:13px;margin-bottom:6px;font-weight:700;color:#627d98}
+    .field input,.field select{width:100%;height:42px;border:1px solid #d9e2ec;border-radius:10px;padding:0 12px;font-size:15px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    button{border:0;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:700;cursor:pointer}
+    .primary{background:#1565c0;color:#fff}
+    .secondary{background:#eef4ff;color:#0d47a1}
+    .status{margin-top:12px;padding:12px 14px;border-radius:10px;background:#eef3f8;display:none;white-space:pre-wrap}
+    .ok{display:block;background:#edf7ee;color:#137333}.error{display:block;background:#fdeeee;color:#c62828}
+    .warn{display:block;background:#fff6e5;color:#b26a00}.info{display:block}
+    .table-wrap{overflow:auto;border:1px solid #d9e2ec;border-radius:12px}
+    table{width:100%;border-collapse:collapse;min-width:920px}
+    th,td{border-bottom:1px solid #d9e2ec;padding:10px 12px;text-align:left;font-size:14px;vertical-align:top}
+    thead th{background:#f7fafc}
+    .mono{font-family:Consolas,monospace}
+    .meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;color:#627d98;font-size:13px}
+    @media (max-width:900px){.grid{grid-template-columns:repeat(2,minmax(140px,1fr))}}
+    @media (max-width:560px){.grid{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>Past WX Search</h1>
-      <div class="sub">GitHub Pages용 화면입니다. 조회는 Google Apps Script 웹앱으로 전달됩니다.</div>
-      <div class="meta">
-        <div>Web App: <span class="mono" id="webAppUrlText"></span></div>
-        <div id="connState" class="pill">Ready</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="grid">
-        <div class="field">
-          <label for="airport">AIRPORT</label>
-          <input id="airport" maxlength="4" placeholder="RKSI" />
-        </div>
-        <div class="field">
-          <label for="startDate">시작일자</label>
-          <input id="startDate" type="date" />
-        </div>
-        <div class="field">
-          <label for="endDate">종료일자</label>
-          <input id="endDate" type="date" />
-        </div>
-        <div class="field">
-          <label for="hourUtc">검색 시간(UTC)</label>
-          <input id="hourUtc" type="time" step="3600" value="16:00" />
-        </div>
-        <div class="field">
-          <label for="sa">조건 1</label>
-          <select id="sa">
-            <option value="CAVOK">CAVOK</option>
-            <option value="NIL">NIL</option>
-            <option value="NONE">NONE</option>
-          </select>
-        </div>
-        <div class="field">
-          <label for="old">조건 2</label>
-          <select id="old">
-            <option value="P6SM">P6SM</option>
-            <option value="9999">9999</option>
-            <option value="NONE">NONE</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="primary" onclick="runSearch()">조회</button>
-        <button class="secondary" onclick="saveToSheet()">결과를 시트에 저장</button>
-        <button class="secondary" onclick="loadSheetInputs()">시트값 불러오기</button>
-        <button class="secondary" onclick="clearResults()">초기화</button>
-      </div>
-
-      <div id="status" class="status info"></div>
-    </div>
-
-    <div class="card">
-      <div class="meta" style="margin-bottom:12px;">
-        <div>결과 건수: <strong id="rowCount">0</strong></div>
-        <div>공항: <strong id="metaAirport">-</strong></div>
-        <div>기간: <strong id="metaPeriod">-</strong></div>
-      </div>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr>
-              <th style="width:72px;">No</th>
-              <th style="width:110px;">Date</th>
-              <th style="width:70px;">UTC</th>
-              <th style="width:70px;">Day</th>
-              <th style="width:90px;">Type</th>
-              <th>METAR / SPECI</th>
-            </tr>
-          </thead>
-          <tbody id="resultBody">
-            <tr><td colspan="6" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
+<div class="wrap">
+  <div class="card">
+    <h1 style="margin:0 0 8px;">Past WX Search</h1>
+    <div style="color:#627d98">GitHub Pages + Apps Script(JSONP) 방식</div>
+    <div class="meta"><div>Web App: <span id="webapp"></span></div></div>
   </div>
 
-  <script>
-    const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyKEYbLsgccC0w1YmyRoPFvQvJteGXq6I7k66TDz-lbgrv4CGqsISCH-c8jm12ee2dY2w/exec';
+  <div class="card">
+    <div class="grid">
+      <div class="field"><label>AIRPORT</label><input id="airport" maxlength="4" placeholder="RKSS"></div>
+      <div class="field"><label>시작일자</label><input id="startDate" type="date"></div>
+      <div class="field"><label>종료일자</label><input id="endDate" type="date"></div>
+      <div class="field"><label>검색 시간(UTC)</label><input id="hourUtc" type="time" step="3600" value="16:00"></div>
+      <div class="field">
+        <label>조건 1</label>
+        <select id="sa">
+          <option value="CAVOK">CAVOK</option>
+          <option value="NIL">NIL</option>
+          <option value="NONE">NONE</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>조건 2</label>
+        <select id="old">
+          <option value="P6SM">P6SM</option>
+          <option value="9999">9999</option>
+          <option value="NONE">NONE</option>
+        </select>
+      </div>
+    </div>
 
-    let currentRows = [];
-    let currentParams = {};
+    <div class="actions">
+      <button class="primary" onclick="runSearch()">조회</button>
+      <button class="secondary" onclick="saveToSheet()">결과를 시트에 저장</button>
+      <button class="secondary" onclick="loadSheetInputs()">시트값 불러오기</button>
+      <button class="secondary" onclick="clearResults()">초기화</button>
+    </div>
 
-    document.getElementById('webAppUrlText').textContent = GAS_WEBAPP_URL;
+    <div id="status" class="status info"></div>
+  </div>
 
-    function setStatus(message, type = 'info') {
-      const el = document.getElementById('status');
-      el.className = 'status ' + type;
-      el.style.display = 'block';
-      el.textContent = message;
-    }
-
-    function setConnectionState(text) {
-      document.getElementById('connState').textContent = text;
-    }
-
-    function getParamsFromForm() {
-      return {
-        airport: document.getElementById('airport').value.trim().toUpperCase(),
-        startDate: document.getElementById('startDate').value,
-        endDate: document.getElementById('endDate').value,
-        hourUtc: document.getElementById('hourUtc').value,
-        sa: document.getElementById('sa').value,
-        old: document.getElementById('old').value
-      };
-    }
-
-    function validateParams(p) {
-      if (!p.airport || p.airport.length !== 4) return '공항코드는 4자리 ICAO로 입력하세요.';
-      if (!p.startDate) return '시작일자를 입력하세요.';
-      if (!p.endDate) return '종료일자를 입력하세요.';
-      if (!p.hourUtc) return '검색 시간을 입력하세요.';
-      if (p.startDate > p.endDate) return '시작일자가 종료일자보다 늦습니다.';
-      return '';
-    }
-
-    function escapeHtml(str) {
-      return String(str ?? '')
-        .replaceAll('&', '&amp;')
-        .replaceAll('<', '&lt;')
-        .replaceAll('>', '&gt;')
-        .replaceAll('"', '&quot;')
-        .replaceAll("'", '&#39;');
-    }
-
-    function getDayName(dateString) {
-      const d = new Date(dateString + 'T00:00:00');
-      const arr = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-      return Number.isNaN(d.getTime()) ? '' : arr[d.getDay()];
-    }
-
-    function renderRows(rows) {
-      const body = document.getElementById('resultBody');
-      document.getElementById('rowCount').textContent = rows.length;
-      document.getElementById('metaAirport').textContent = currentParams.airport || '-';
-      document.getElementById('metaPeriod').textContent = currentParams.startDate && currentParams.endDate
-        ? `${currentParams.startDate} ~ ${currentParams.endDate} / ${currentParams.hourUtc || ''} UTC`
-        : '-';
-
-      if (!rows || rows.length === 0) {
-        body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>';
-        return;
-      }
-
-      body.innerHTML = rows.map((row, idx) => {
-        const dateText = row.date || '';
-        const dayName = row.day || getDayName(dateText);
-        return `
+  <div class="card">
+    <div class="meta" style="margin-bottom:12px;">
+      <div>결과 건수: <strong id="rowCount">0</strong></div>
+      <div>공항: <strong id="metaAirport">-</strong></div>
+      <div>기간: <strong id="metaPeriod">-</strong></div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
           <tr>
-            <td class="right">${idx + 1}</td>
-            <td>${escapeHtml(dateText)}</td>
-            <td>${escapeHtml(row.time || '')}</td>
-            <td>${escapeHtml(dayName)}</td>
-            <td>${escapeHtml(row.type || '')}</td>
-            <td class="mono">${escapeHtml(row.report || '')}</td>
+            <th>No</th><th>Date</th><th>UTC</th><th>Day</th><th>Type</th><th>METAR / SPECI</th>
           </tr>
-        `;
-      }).join('');
+        </thead>
+        <tbody id="resultBody">
+          <tr><td colspan="6" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyYegi0m8OirslMnP03_MVJHcHTo79gE_3b2g2nOBpGyqYCQc0RmwTbewNSE_PwwuyVBg/exec';
+document.getElementById('webapp').textContent = GAS_WEBAPP_URL;
+
+let currentRows = [];
+let currentParams = {};
+let jsonpSeq = 0;
+
+function setStatus(message, type='info'){
+  const el = document.getElementById('status');
+  el.className = 'status ' + type;
+  el.style.display = 'block';
+  el.textContent = message;
+}
+
+function getParams(){
+  return {
+    airport: document.getElementById('airport').value.trim().toUpperCase(),
+    startDate: document.getElementById('startDate').value,
+    endDate: document.getElementById('endDate').value,
+    hourUtc: document.getElementById('hourUtc').value,
+    sa: document.getElementById('sa').value,
+    old: document.getElementById('old').value
+  };
+}
+
+function validate(p){
+  if (!p.airport || p.airport.length !== 4) return '공항코드는 4자리 ICAO로 입력하세요.';
+  if (!p.startDate) return '시작일자를 입력하세요.';
+  if (!p.endDate) return '종료일자를 입력하세요.';
+  if (!p.hourUtc) return '검색 시간을 입력하세요.';
+  if (p.startDate > p.endDate) return '시작일자가 종료일자보다 늦습니다.';
+  return '';
+}
+
+function jsonpRequest(params){
+  return new Promise((resolve, reject) => {
+    const cb = '__jsonp_cb_' + (++jsonpSeq);
+    const script = document.createElement('script');
+    const qs = new URLSearchParams({...params, prefix: cb}).toString();
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('응답 시간 초과'));
+    }, 30000);
+
+    function cleanup(){
+      clearTimeout(timer);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try { delete window[cb]; } catch(e) { window[cb] = undefined; }
     }
 
-    function clearResults() {
-      currentRows = [];
-      renderRows([]);
-      setStatus('초기화되었습니다.', 'info');
-    }
+    window[cb] = function(data){
+      cleanup();
+      resolve(data);
+    };
 
-    async function requestJson(params) {
-      const qs = new URLSearchParams(params).toString();
-      const url = `${GAS_WEBAPP_URL}?${qs}`;
-      const res = await fetch(url, { method: 'GET', redirect: 'follow' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    }
+    script.onerror = function(){
+      cleanup();
+      reject(new Error('JSONP 로드 실패'));
+    };
 
-    async function runSearch() {
-      const params = getParamsFromForm();
-      const err = validateParams(params);
-      if (err) {
-        setStatus(err, 'error');
-        return;
-      }
-      currentParams = params;
-      setConnectionState('Searching');
-      setStatus('조회 중...', 'info');
-      try {
-        const data = await requestJson({
-          action: 'search',
-          airport: params.airport,
-          startDate: params.startDate,
-          endDate: params.endDate,
-          hourUtc: params.hourUtc,
-          sa: params.sa,
-          old: params.old
-        });
-        if (!data.ok) throw new Error(data.message || '검색 실패');
-        currentRows = Array.isArray(data.rows) ? data.rows : [];
-        renderRows(currentRows);
-        setStatus(`조회 완료: ${currentRows.length}건`, currentRows.length ? 'ok' : 'warn');
-        setConnectionState('Connected');
-      } catch (e) {
-        console.error(e);
-        setStatus('조회 실패: ' + e.message + '\n\nApps Script가 JSON 응답을 반환하도록 배포되어 있는지 확인하세요.', 'error');
-        setConnectionState('Error');
-      }
-    }
+    script.src = GAS_WEBAPP_URL + '?' + qs;
+    document.body.appendChild(script);
+  });
+}
 
-    async function saveToSheet() {
-      if (!currentRows.length) {
-        setStatus('먼저 조회를 실행하세요.', 'warn');
-        return;
-      }
-      setStatus('시트 저장 중...', 'info');
-      try {
-        const res = await fetch(GAS_WEBAPP_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'save', params: currentParams, rows: currentRows })
-        });
-        const data = await res.json();
-        if (!data.ok) throw new Error(data.message || '시트 저장 실패');
-        setStatus(data.message || '시트 저장 완료', 'ok');
-      } catch (e) {
-        console.error(e);
-        setStatus('시트 저장 실패: ' + e.message + '\n\ndoPost(e) 구현 여부를 확인하세요.', 'error');
-      }
-    }
+function escapeHtml(str){
+  return String(str ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#39;");
+}
 
-    async function loadSheetInputs() {
-      setStatus('시트 입력값 불러오는 중...', 'info');
-      try {
-        const data = await requestJson({ action: 'sheetInputs' });
-        if (!data.ok) throw new Error(data.message || '시트값 읽기 실패');
-        const p = data.params || {};
-        if (p.airport) document.getElementById('airport').value = p.airport;
-        if (p.startDate) document.getElementById('startDate').value = p.startDate;
-        if (p.endDate) document.getElementById('endDate').value = p.endDate;
-        if (p.hourUtc) document.getElementById('hourUtc').value = p.hourUtc;
-        if (p.sa) document.getElementById('sa').value = p.sa;
-        if (p.old) document.getElementById('old').value = p.old;
-        setStatus('시트 입력값을 불러왔습니다.', 'ok');
-      } catch (e) {
-        console.error(e);
-        setStatus('시트 입력값 불러오기 실패: ' + e.message, 'error');
-      }
-    }
-  </script>
+function renderRows(rows){
+  document.getElementById('rowCount').textContent = rows.length;
+  document.getElementById('metaAirport').textContent = currentParams.airport || '-';
+  document.getElementById('metaPeriod').textContent =
+    currentParams.startDate ? `${currentParams.startDate} ~ ${currentParams.endDate} / ${currentParams.hourUtc} UTC` : '-';
+
+  const body = document.getElementById('resultBody');
+  if (!rows.length){
+    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>';
+    return;
+  }
+
+  body.innerHTML = rows.map((r,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td>${escapeHtml(r.date||'')}</td>
+      <td>${escapeHtml(r.time||'')}</td>
+      <td>${escapeHtml(r.day||'')}</td>
+      <td>${escapeHtml(r.type||'')}</td>
+      <td class="mono">${escapeHtml(r.report||'')}</td>
+    </tr>
+  `).join('');
+}
+
+async function runSearch(){
+  const p = getParams();
+  const err = validate(p);
+  if (err){ setStatus(err, 'error'); return; }
+
+  currentParams = p;
+  setStatus('조회 중...', 'info');
+
+  try{
+    const data = await jsonpRequest({ action:'search', ...p });
+    if (!data.ok) throw new Error(data.message || '조회 실패');
+    currentRows = Array.isArray(data.rows) ? data.rows : [];
+    renderRows(currentRows);
+    setStatus(`조회 완료: ${currentRows.length}건`, currentRows.length ? 'ok' : 'warn');
+  }catch(e){
+    setStatus('조회 실패: ' + e.message, 'error');
+  }
+}
+
+async function saveToSheet(){
+  const p = getParams();
+  const err = validate(p);
+  if (err){ setStatus(err, 'error'); return; }
+
+  setStatus('시트 저장 중...', 'info');
+
+  try{
+    const data = await jsonpRequest({ action:'save', ...p });
+    if (!data.ok) throw new Error(data.message || '시트 저장 실패');
+    setStatus(data.message || '시트 저장 완료', 'ok');
+  }catch(e){
+    setStatus('시트 저장 실패: ' + e.message, 'error');
+  }
+}
+
+async function loadSheetInputs(){
+  setStatus('시트 입력값 불러오는 중...', 'info');
+  try{
+    const data = await jsonpRequest({ action:'sheetInputs' });
+    if (!data.ok) throw new Error(data.message || '불러오기 실패');
+
+    const p = data.params || {};
+    if (p.airport) document.getElementById('airport').value = p.airport;
+    if (p.startDate) document.getElementById('startDate').value = p.startDate;
+    if (p.endDate) document.getElementById('endDate').value = p.endDate;
+    if (p.hourUtc) document.getElementById('hourUtc').value = p.hourUtc;
+    if (p.sa) document.getElementById('sa').value = p.sa;
+    if (p.old) document.getElementById('old').value = p.old;
+
+    setStatus('시트 입력값을 불러왔습니다.', 'ok');
+  }catch(e){
+    setStatus('시트 입력값 불러오기 실패: ' + e.message, 'error');
+  }
+}
+
+function clearResults(){
+  currentRows = [];
+  currentParams = {};
+  renderRows([]);
+  setStatus('초기화되었습니다.', 'info');
+}
+</script>
 </body>
 </html>

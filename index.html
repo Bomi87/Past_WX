@@ -206,6 +206,22 @@ function extractWindKt(report){
   return '';
 }
 
+function getRowColor(vis, wind){
+  const v = Number(vis);
+  const w = Number(wind);
+
+  if (vis !== '' && !isNaN(v)) {
+    if (v <= 700) return '#f4cccc';
+    if (v > 700 && v <= 1200) return '#fff2cc';
+  }
+
+  if (wind !== '' && !isNaN(w)) {
+    if (w >= 25) return '#cfe2f3';
+  }
+
+  return '';
+}
+
 function renderRows(rows){
   document.getElementById('rowCount').textContent = rows.length;
   document.getElementById('metaAirport').textContent = currentParams.airport || '-';
@@ -223,9 +239,10 @@ function renderRows(rows){
   body.innerHTML = rows.map((r,i)=>{
     const vis = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : extractVisibilityMeters(r.report);
     const wind = (r.windKt ?? '') !== '' ? r.windKt : extractWindKt(r.report);
+    const rowColor = getRowColor(vis, wind);
 
     return `
-      <tr>
+      <tr style="background:${rowColor};">
         <td>${i+1}</td>
         <td>${escapeHtml(r.utcDate || '')}</td>
         <td>${escapeHtml(r.utcTime || '')}</td>

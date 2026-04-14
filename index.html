@@ -16,7 +16,10 @@
     .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
     .actions button{flex:0 0 auto}
     button{border:0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;min-width:105px;white-space:nowrap}
-
+ button:disabled{
+    opacity:0.6;
+    cursor:not-allowed;
+  }
     @media (max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:700px){
       .actions{gap:6px}
@@ -66,7 +69,7 @@
     </div>
 
     <div class="actions">
-      <button class="primary" onclick="runSearch()">조회</button>
+     <button id="searchBtn" class="primary" onclick="runSearch()">조회</button>
       <button class="secondary" onclick="clearResults()">초기화</button>
     </div>
 
@@ -103,7 +106,7 @@
 </div>
 
 <script>
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx0kqqYHc4wWoWMKpT4c1tPJer0PHLJpL9uRPcNbeIRMmBn47rjfAVinpN3dPAKetmPuw/exec';
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzRt-IyK16BSZxyIYpNs963OysJgSV1io4UMjdLx1wz3qIsrdxsIglNXaKj-NXdn1Gv/exec';
 const WX_HIGHLIGHT_CODES = ['TS','GR','GS','FZ','FG','SN','FC','VA','SG','PL','SS','DS','SQ'];
 
 let currentRows = [];
@@ -284,9 +287,16 @@ function renderRows(rows){
 }
 
 async function runSearch(){
+  const btn = document.getElementById('searchBtn');
+  if (btn) btn.disabled = true;
+
   const p = getParams();
   const err = validate(p);
-  if (err){ setStatus(err, 'error'); return; }
+  if (err){
+    setStatus(err, 'error');
+    if (btn) btn.disabled = false;
+    return;
+  }
 
   currentParams = p;
   setStatus('조회 중...', 'info');
@@ -299,6 +309,8 @@ async function runSearch(){
     setStatus(`조회 완료: ${currentRows.length}건`, currentRows.length ? 'ok' : 'warn');
   }catch(e){
     setStatus('조회 실패: ' + e.message, 'error');
+  }finally{
+    if (btn) btn.disabled = false;
   }
 }
 

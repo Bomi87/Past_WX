@@ -8,9 +8,9 @@
     body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;padding:24px;color:#243b53}
     .wrap{max-width:1180px;margin:0 auto}
     .card{background:#fff;border:1px solid #d9e2ec;border-radius:16px;padding:18px;margin-bottom:16px}
-    .grid{display:grid;grid-template-columns:repeat(6,minmax(120px,1fr));gap:12px}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:12px}
     .field label{display:block;font-size:13px;margin-bottom:6px;font-weight:700;color:#627d98}
-    .field input,.field select{width:100%;height:42px;border:1px solid #d9e2ec;border-radius:10px;padding:0 12px;font-size:15px}
+    .field input{width:100%;height:42px;border:1px solid #d9e2ec;border-radius:10px;padding:0 12px;font-size:15px}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
     button{border:0;border-radius:10px;padding:11px 16px;font-size:14px;font-weight:700;cursor:pointer}
     .primary{background:#1565c0;color:#fff}
@@ -32,7 +32,7 @@
 <div class="wrap">
   <div class="card">
     <h1 style="margin:0 0 8px;">Past WX Search</h1>
-    <div style="color:#627d98">GitHub Pages + Apps Script(JSONP) 방식</div>
+    <div style="color:#627d98">GitHub Pages + Apps Script(JSONP)</div>
     <div class="meta"><div>Web App: <span id="webapp"></span></div></div>
   </div>
 
@@ -41,23 +41,7 @@
       <div class="field"><label>AIRPORT</label><input id="airport" maxlength="4" placeholder="RKSS"></div>
       <div class="field"><label>시작일자</label><input id="startDate" type="date"></div>
       <div class="field"><label>종료일자</label><input id="endDate" type="date"></div>
-      <div class="field"><label>검색 시간(UTC)</label><input id="hourUtc" type="time" step="3600" value="16:00"></div>
-      <div class="field">
-        <label>조건 1</label>
-        <select id="sa">
-          <option value="CAVOK">CAVOK</option>
-          <option value="NIL">NIL</option>
-          <option value="NONE">NONE</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>조건 2</label>
-        <select id="old">
-          <option value="P6SM">P6SM</option>
-          <option value="9999">9999</option>
-          <option value="NONE">NONE</option>
-        </select>
-      </div>
+      <div class="field"><label>검색 시간(UTC)</label><input id="hourUtc" type="time" step="60" value="16:00"></div>
     </div>
 
     <div class="actions">
@@ -92,7 +76,7 @@
 </div>
 
 <script>
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyCj6dsi66tXxpVnilLH1ZadSMGWOoq0DtzhpxLl29wl5dYbt54K2mDHVicIluMW9vLZA/exec';
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxBkx6BKrAAljd6Rk2cl5w9X7VaextUgNopgAKa84dujFHPKtbYraQFeNY3w7dhpSuczA/exec';
 document.getElementById('webapp').textContent = GAS_WEBAPP_URL;
 
 let currentRows = [];
@@ -111,9 +95,7 @@ function getParams(){
     airport: document.getElementById('airport').value.trim().toUpperCase(),
     startDate: document.getElementById('startDate').value,
     endDate: document.getElementById('endDate').value,
-    hourUtc: document.getElementById('hourUtc').value,
-    sa: document.getElementById('sa').value,
-    old: document.getElementById('old').value
+    hourUtc: document.getElementById('hourUtc').value
   };
 }
 
@@ -131,6 +113,7 @@ function jsonpRequest(params){
     const cb = '__jsonp_cb_' + (++jsonpSeq);
     const script = document.createElement('script');
     const qs = new URLSearchParams({...params, prefix: cb}).toString();
+
     const timer = setTimeout(() => {
       cleanup();
       reject(new Error('응답 시간 초과'));
@@ -236,8 +219,6 @@ async function loadSheetInputs(){
     if (p.startDate) document.getElementById('startDate').value = p.startDate;
     if (p.endDate) document.getElementById('endDate').value = p.endDate;
     if (p.hourUtc) document.getElementById('hourUtc').value = p.hourUtc;
-    if (p.sa) document.getElementById('sa').value = p.sa;
-    if (p.old) document.getElementById('old').value = p.old;
 
     setStatus('시트 입력값을 불러왔습니다.', 'ok');
   }catch(e){

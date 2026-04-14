@@ -390,7 +390,7 @@ function renderRows(rows){
   }
 
   body.innerHTML = rows.map((r,i)=>{
-    const visRaw = extractVisibilityMeters(r.report);
+   const visRaw = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : '';
 
     const windToken = extractWindToken(r.report);
     const windInfo = parseWindInfo(windToken);

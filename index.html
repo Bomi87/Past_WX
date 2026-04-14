@@ -89,12 +89,13 @@
             <th>Date(UTC)</th>
             <th>UTC</th>
             <th>Report</th>
+            <th>Phenomena</th>
             <th>Visibility</th>
             <th>Wind</th>
           </tr>
         </thead>
         <tbody id="resultBody">
-          <tr><td colspan="6" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>
+          <tr><td colspan="7" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>
         </tbody>
       </table>
     </div>
@@ -102,11 +103,18 @@
 </div>
 
 <script>
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxPxUhGFL0PYnMXGvDVnC53F074KxzuRnmfp0A1e7EP5RgJBnskC0ZQA18PwUZ7FIbUpQ/exec';
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxFZOw1yKRgqihTn62piaib4k7kuilwZsVGM0cTu_WNd3JHVz0dHvd_-MvkVjLgsYXspA/exec';
+const WX_HIGHLIGHT_CODES = ['TS','GR','GS','FZ','FG','SN','FC','VA','SG','PL','SS','DS','SQ'];
 
 let currentRows = [];
 let currentParams = {};
 let jsonpSeq = 0;
+
+function hasHighlightedWeather(wxText){
+  const s = String(wxText || '').toUpperCase();
+  if (!s) return false;
+  return WX_HIGHLIGHT_CODES.some(code => s.indexOf(code) > -1);
+}
 
 function setStatus(message, type='info'){
   const el = document.getElementById('status');
@@ -220,141 +228,6 @@ function escapeHtml(str){
     .replaceAll("'","&#39;");
 }
 
-/* =========================
-   VISIBILITY
-========================= */
-
-function extractVisibilityMeters(report){
-  const txt = String(report || '').toUpperCase();
-  const values = [];
-
-  if (/\bCAVOK\b/.test(txt)) values.push(9999);
-  if (/\bP6SM\b/.test(txt)) values.push(9999);
-
-  // 혼합분수: 1 1/2SM, 2 1/2SM
-  const mixedFracMatches = txt.matchAll(/\b(\d+)\s+(\d+)\/(\d+)SM\b/g);
-  for (const m of mixedFracMatches) {
-    const whole = Number(m[1]);
-    const num = Number(m[2]);
-    const den = Number(m[3]);
-    if (den > 0) values.push(Math.round((whole + num / den) * 1609.34));
-  }
-
-  // M1/4SM
-  const lessThanFracMatches = txt.matchAll(/\bM(\d+)\/(\d+)SM\b/g);
-  for (const m of lessThanFracMatches) {
-    const num = Number(m[1]);
-    const den = Number(m[2]);
-    if (den > 0) values.push(Math.round((num / den) * 1609.34));
-  }
-
-  // 순수 분수: 1/2SM
-  const fracMatches = txt.matchAll(/\b(\d+)\/(\d+)SM\b/g);
-  for (const m of fracMatches) {
-    const start = m.index ?? -1;
-    if (start > 0) {
-      const prevChar = txt[start - 1];
-      if (/\d|M/.test(prevChar)) continue;
-    }
-    const num = Number(m[1]);
-    const den = Number(m[2]);
-    if (den > 0) values.push(Math.round((num / den) * 1609.34));
-  }
-
-  // 정수: 1SM, 2SM, 6SM
-  const wholeMatches = txt.matchAll(/\b(\d+)SM\b/g);
-  for (const m of wholeMatches) {
-    const start = m.index ?? -1;
-    if (start > 0) {
-      const prevChunk = txt.slice(Math.max(0, start - 6), start);
-      if (/\d+\s+\d+\/\d+\s*$/.test(prevChunk) || /\d\/\d\s*$/.test(prevChunk) || /M\s*$/.test(prevChunk)) continue;
-    }
-    values.push(Math.round(Number(m[1]) * 1609.34));
-  }
-
-  // RVR
-  const rvrMatches = txt.matchAll(/\bR\d{2}[LRC]?\/P?(\d{4})[UDN]?\b/g);
-  for (const m of rvrMatches) {
-    values.push(Number(m[1]));
-  }
-
-  // prevailing visibility(미터형)
-  const prevailingMatch = txt.match(
-    /\b(?:METAR|SPECI)\s+[A-Z0-9]{4}\s+\d{6}Z\s+(?:\d{3}|VRB)\d{2,3}(?:G\d{2,3})?(?:KT|MPS)(?:\s+\d{3}V\d{3})?\s+(\d{4})\b/
-  );
-  if (prevailingMatch) {
-    values.push(Number(prevailingMatch[1]));
-  }
-
-  if (!values.length) return '';
-  return Math.min(...values);
-}
-/* =========================
-   WIND
-========================= */
-
-function extractWindToken(report){
-  const txt = String(report || '').toUpperCase();
-  const m = txt.match(/\b(?:\d{3}|VRB)\d{2,3}(?:G\d{2,3})?(?:KT|MPS)\b/);
-  return m ? m[0] : '';
-}
-
-function parseWindInfo(windToken){
-  if (!windToken) {
-    return {
-      display: '',
-      speedKt: null,
-      gustKt: null,
-      highlightBlue: false
-    };
-  }
-
-  const s = String(windToken).toUpperCase().trim();
-  const m = s.match(/^(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?(KT|MPS)$/);
-  if (!m) {
-    return {
-      display: '',
-      speedKt: null,
-      gustKt: null,
-      highlightBlue: false
-    };
-  }
-
-  let speed = Number(m[2]);
-  let gust = m[3] ? Number(m[3]) : null;
-  const unit = m[4];
-
-  let speedKt = speed;
-  let gustKt = gust;
-
-  // MPS → KT 환산
-  if (unit === 'MPS') {
-    speedKt = Math.round(speed * 1.94384);
-    gustKt = gust != null ? Math.round(gust * 1.94384) : null;
-  }
-
-  const highlightBlue =
-    speedKt >= 20 ||
-    (gustKt != null && gustKt >= 25);
-
-  return {
-    display: gustKt != null ? `${speedKt}G${gustKt}kt` : `${speedKt}kt`,
-    speedKt: speedKt,
-    gustKt: gustKt,
-    highlightBlue: highlightBlue
-  };
-}
-
-function extractWindKt(report){
-  const token = extractWindToken(report);
-  const info = parseWindInfo(token);
-  return info.speedKt == null ? '' : info.speedKt;
-}
-
-/* =========================
-   COLOR
-========================= */
-
 function getCellColor(type, value){
   const v = Number(value);
   if (value === '' || isNaN(v)) return '';
@@ -371,10 +244,6 @@ function getCellColor(type, value){
   return '';
 }
 
-/* =========================
-   RENDER
-========================= */
-
 function renderRows(rows){
   document.getElementById('rowCount').textContent = rows.length;
   document.getElementById('metaAirport').textContent = currentParams.airport || '-';
@@ -385,21 +254,20 @@ function renderRows(rows){
   const body = document.getElementById('resultBody');
 
   if (!rows.length){
-    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>';
+    body.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>';
     return;
   }
 
   body.innerHTML = rows.map((r,i)=>{
-   const visRaw = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : '';
+    const wx = r.phenomena || '';
+    const wxColor = hasHighlightedWeather(wx) ? '#f4cccc' : '';
 
-    const windToken = extractWindToken(r.report);
-    const windInfo = parseWindInfo(windToken);
-
+    const visRaw = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : '';
     const visColor = getCellColor('vis', visRaw);
-    const windColor = windInfo.highlightBlue ? '#cfe2f3' : '';
-
     const vis = visRaw === '' ? '' : visRaw + 'm';
-    const wind = windInfo.display || '';
+
+    const wind = r.windDisplay || '';
+    const windColor = r.windBlue ? '#cfe2f3' : '';
 
     return `
       <tr>
@@ -407,6 +275,7 @@ function renderRows(rows){
         <td style="white-space:nowrap;">${escapeHtml(r.utcDate || '')}</td>
         <td style="white-space:nowrap;">${escapeHtml(r.utcTime || '')}</td>
         <td class="mono">${escapeHtml(r.report || '')}</td>
+        <td style="background:${wxColor};">${escapeHtml(wx)}</td>
         <td style="background:${visColor};">${escapeHtml(vis)}</td>
         <td style="background:${windColor};">${escapeHtml(wind)}</td>
       </tr>

@@ -105,7 +105,7 @@ button{border:0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:7
 </div>
 
 <script>
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyzYDf2oSpq5XafwUZdf04QlHHeQlTXS2vG5r8XrUkMUAd4ccbcz0BCKWeXR3QUo3X2UA/exec';
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxQBtPMGGIZ7q0ahmThFSJOQhTBOIFMVtElHhZ09MJvESD4JO6GbO2sFVeVE7R_VERIdQ/exec';
 
 
 let currentRows = [];
@@ -246,7 +246,9 @@ function extractVisibilityMeters(report){
     values.push(Number(m[1]));
   }
 
-  const prevailingMatch = txt.match(/\b(?:METAR|SPECI)\s+[A-Z0-9]{4}\s+\d{6}Z\s+(?:\d{3}|VRB)\d{2,3}(?:G\d{2,3})?KT(?:\s+\d{3}V\d{3})?\s+(\d{4})\b/);
+  const prevailingMatch = txt.match(
+    /\b(?:METAR|SPECI)\s+[A-Z0-9]{4}\s+\d{6}Z\s+(?:\d{3}|VRB)\d{2,3}(?:G\d{2,3})?KT(?:\s+\d{3}V\d{3})?\s+(\d{4})\b/
+  );
   if (prevailingMatch) {
     values.push(Number(prevailingMatch[1]));
   }

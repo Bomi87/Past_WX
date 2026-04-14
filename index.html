@@ -84,8 +84,8 @@
             <th>Date(UTC)</th>
             <th>UTC</th>
             <th>Report</th>
-            <th>Visibility(m)</th>
-            <th>WindKT</th>
+           <th>Visibility</th>
+          <th>Wind</th>
           </tr>
         </thead>
         <tbody id="resultBody">
@@ -97,7 +97,7 @@
 </div>
 
 <script>
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx9EP-xJccORNmjuwmVq11AvnOeSINguQMhQ529oX32skWeAVhbOc9ijopxtiWh5E6Hhg/exec';
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzuaD-C5_LR5zO9pDPrCqgshtjnNdQVFAn8434o2Nx1-TAhCnt-NagiXTBAYqfQdqD_1Q/exec';
 document.getElementById('webapp').textContent = GAS_WEBAPP_URL;
 
 let currentRows = [];
@@ -173,6 +173,8 @@ function escapeHtml(str){
 function extractVisibilityMeters(report){
   const txt = String(report || '').toUpperCase();
 
+  if (/\bCAVOK\b/.test(txt)) return 9999;
+
   const m = txt.match(/\b(\d{4})\b/);
   if (m) {
     const val = Number(m[1]);
@@ -206,17 +208,17 @@ function extractWindKt(report){
   return '';
 }
 
-function getRowColor(vis, wind){
-  const v = Number(vis);
-  const w = Number(wind);
+function getCellColor(type, value){
+  const v = Number(value);
+  if (value === '' || isNaN(v)) return '';
 
-  if (vis !== '' && !isNaN(v)) {
-    if (v <= 700) return '#f4cccc';
-    if (v > 700 && v <= 1200) return '#fff2cc';
+  if (type === 'vis') {
+    if (v <= 700) return '#f4cccc';     // 빨강
+    if (v > 700 && v <= 1200) return '#fce5cd'; // 주황
   }
 
-  if (wind !== '' && !isNaN(w)) {
-    if (w >= 25) return '#cfe2f3';
+  if (type === 'wind') {
+    if (v >= 25) return '#cfe2f3';      // 파랑
   }
 
   return '';
@@ -237,18 +239,23 @@ function renderRows(rows){
   }
 
   body.innerHTML = rows.map((r,i)=>{
-    const vis = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : extractVisibilityMeters(r.report);
-    const wind = (r.windKt ?? '') !== '' ? r.windKt : extractWindKt(r.report);
-    const rowColor = getRowColor(vis, wind);
+const visRaw = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : extractVisibilityMeters(r.report);
+const windRaw = (r.windKt ?? '') !== '' ? r.windKt : extractWindKt(r.report);
+
+const visColor = getCellColor('vis', visRaw);
+const windColor = getCellColor('wind', windRaw);
+
+const vis = visRaw === '' ? '' : visRaw + 'm';
+const wind = windRaw === '' ? '' : windRaw + 'kt';
 
     return `
-      <tr style="background:${rowColor};">
+      <tr>
         <td>${i+1}</td>
         <td>${escapeHtml(r.utcDate || '')}</td>
         <td>${escapeHtml(r.utcTime || '')}</td>
         <td class="mono">${escapeHtml(r.report || '')}</td>
-        <td>${escapeHtml(vis)}</td>
-        <td>${escapeHtml(wind)}</td>
+        <td style="background:${visColor};">${escapeHtml(vis)}</td>
+        <td style="background:${windColor};">${escapeHtml(wind)}</td>
       </tr>
     `;
   }).join('');

@@ -105,7 +105,7 @@ button{border:0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:7
 </div>
 
 <script>
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx9UrGiBRpg0bFGldiVciu_CRITG7Y18iKwwh3mu0C1DlSIOCNp4897faALyzAa0YsFmA/exec';
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyzYDf2oSpq5XafwUZdf04QlHHeQlTXS2vG5r8XrUkMUAd4ccbcz0BCKWeXR3QUo3X2UA/exec';
 
 
 let currentRows = [];
@@ -246,14 +246,9 @@ function extractVisibilityMeters(report){
     values.push(Number(m[1]));
   }
 
-  const dirVisMatches = txt.matchAll(/\b(\d{4})(?:N|NE|E|SE|S|SW|W|NW)\b/g);
-  for (const m of dirVisMatches) {
-    values.push(Number(m[1]));
-  }
-
-  const generalMatches = txt.matchAll(/(?:^|[\s])(?!R\d{2}[LRC]?\/)(\d{4})(?=[\s=]|$)/g);
-  for (const m of generalMatches) {
-    values.push(Number(m[1]));
+  const prevailingMatch = txt.match(/\b(?:METAR|SPECI)\s+[A-Z0-9]{4}\s+\d{6}Z\s+(?:\d{3}|VRB)\d{2,3}(?:G\d{2,3})?KT(?:\s+\d{3}V\d{3})?\s+(\d{4})\b/);
+  if (prevailingMatch) {
+    values.push(Number(prevailingMatch[1]));
   }
 
   if (!values.length) return '';

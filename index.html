@@ -105,7 +105,7 @@ button{border:0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:7
 </div>
 
 <script>
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbzboOEVkVAUGEpx0nHCT3fpwlmyCjrzRRum6oGifu5Q3PBez18MmxxwLcqu9BOgDsb3tA/exec';
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbx9UrGiBRpg0bFGldiVciu_CRITG7Y18iKwwh3mu0C1DlSIOCNp4897faALyzAa0YsFmA/exec';
 
 
 let currentRows = [];
@@ -180,32 +180,41 @@ function escapeHtml(str){
 
 function extractVisibilityMeters(report){
   const txt = String(report || '').toUpperCase();
+  const values = [];
 
-  if (/\bCAVOK\b/.test(txt)) return 9999;
+  if (/\bCAVOK\b/.test(txt)) values.push(9999);
+  if (/\bP6SM\b/.test(txt)) values.push(9999);
 
-  const m = txt.match(/\b(\d{4})\b/);
-  if (m) {
-    const val = Number(m[1]);
-    if (!isNaN(val)) return val;
+  const fracMatches = txt.matchAll(/\b(\d)\/(\d)SM\b/g);
+  for (const m of fracMatches) {
+    const num = Number(m[1]);
+    const den = Number(m[2]);
+    if (den > 0) values.push(Math.round((num / den) * 1609.34));
   }
 
-  if (/\bP6SM\b/.test(txt)) return 9999;
-
-  const frac = txt.match(/\b(\d)\/(\d)SM\b/);
-  if (frac) {
-    const num = Number(frac[1]);
-    const den = Number(frac[2]);
-    if (den > 0) return Math.round((num / den) * 1609.34);
+  const wholeMatches = txt.matchAll(/\b(\d+)SM\b/g);
+  for (const m of wholeMatches) {
+    values.push(Math.round(Number(m[1]) * 1609.34));
   }
 
-  const whole = txt.match(/\b(\d+)SM\b/);
-  if (whole) {
-    return Math.round(Number(whole[1]) * 1609.34);
+  const rvrMatches = txt.matchAll(/\bR\d{2}[LRC]?\/P?(\d{4})[UDN]?\b/g);
+  for (const m of rvrMatches) {
+    values.push(Number(m[1]));
   }
 
-  return '';
+  const dirVisMatches = txt.matchAll(/\b(\d{4})(?:N|NE|E|SE|S|SW|W|NW)\b/g);
+  for (const m of dirVisMatches) {
+    values.push(Number(m[1]));
+  }
+
+  const generalMatches = txt.matchAll(/(?:^|[\s])(?!R\d{2}[LRC]?\/)(\d{4})(?=[\s=]|$)/g);
+  for (const m of generalMatches) {
+    values.push(Number(m[1]));
+  }
+
+  if (!values.length) return '';
+  return Math.min(...values);
 }
-
 function extractWindKt(report){
   const txt = String(report || '').toUpperCase();
   const m = txt.match(/\b(?:\d{3}|VRB)(\d{2,3})(?:G\d{2,3})?KT\b/);

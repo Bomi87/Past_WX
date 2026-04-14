@@ -16,10 +16,12 @@
     .primary{background:#1565c0;color:#fff}
     .secondary{background:#eef4ff;color:#0d47a1}
     .status{margin-top:12px;padding:12px 14px;border-radius:10px;background:#eef3f8;display:none;white-space:pre-wrap}
-    .ok{display:block;background:#edf7ee;color:#137333}.error{display:block;background:#fdeeee;color:#c62828}
-    .warn{display:block;background:#fff6e5;color:#b26a00}.info{display:block}
+    .ok{display:block;background:#edf7ee;color:#137333}
+    .error{display:block;background:#fdeeee;color:#c62828}
+    .warn{display:block;background:#fff6e5;color:#b26a00}
+    .info{display:block}
     .table-wrap{overflow:auto;border:1px solid #d9e2ec;border-radius:12px}
-    table{width:100%;border-collapse:collapse;min-width:920px}
+    table{width:100%;border-collapse:collapse;min-width:1100px}
     th,td{border-bottom:1px solid #d9e2ec;padding:10px 12px;text-align:left;font-size:14px;vertical-align:top}
     thead th{background:#f7fafc}
     .mono{font-family:Consolas,monospace}
@@ -32,16 +34,28 @@
 <div class="wrap">
   <div class="card">
     <h1 style="margin:0 0 8px;">Past WX Search</h1>
-    <div style="color:#627d98">GitHub Pages + Apps Script(JSONP)</div>
+    <div style="color:#627d98">GitHub Pages + Apps Script(JSONP) / LOCAL 시간 기준 조회</div>
     <div class="meta"><div>Web App: <span id="webapp"></span></div></div>
   </div>
 
   <div class="card">
     <div class="grid">
-      <div class="field"><label>AIRPORT</label><input id="airport" maxlength="4" placeholder="RKSS"></div>
-      <div class="field"><label>시작일자</label><input id="startDate" type="date"></div>
-      <div class="field"><label>종료일자</label><input id="endDate" type="date"></div>
-      <div class="field"><label>검색 시간(UTC)</label><input id="hourUtc" type="time" step="60" value="16:00"></div>
+      <div class="field">
+        <label>AIRPORT</label>
+        <input id="airport" maxlength="4" placeholder="RKSI">
+      </div>
+      <div class="field">
+        <label>시작일자</label>
+        <input id="startDate" type="date">
+      </div>
+      <div class="field">
+        <label>종료일자</label>
+        <input id="endDate" type="date">
+      </div>
+      <div class="field">
+        <label>LOCAL 기준 조회시간</label>
+        <input id="targetLocalTime" type="time" step="60" value="16:00">
+      </div>
     </div>
 
     <div class="actions">
@@ -58,17 +72,26 @@
     <div class="meta" style="margin-bottom:12px;">
       <div>결과 건수: <strong id="rowCount">0</strong></div>
       <div>공항: <strong id="metaAirport">-</strong></div>
+      <div>기준 LOCAL 시간: <strong id="metaLocalTime">-</strong></div>
       <div>기간: <strong id="metaPeriod">-</strong></div>
     </div>
+
     <div class="table-wrap">
       <table>
         <thead>
           <tr>
-            <th>No</th><th>Date</th><th>UTC</th><th>Day</th><th>Type</th><th>METAR / SPECI</th>
+            <th>No</th>
+            <th>Date(UTC)</th>
+            <th>UTC</th>
+            <th>Local Date</th>
+            <th>Local Time</th>
+            <th>Day(Local)</th>
+            <th>Type</th>
+            <th>Report</th>
           </tr>
         </thead>
         <tbody id="resultBody">
-          <tr><td colspan="6" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>
+          <tr><td colspan="8" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>
         </tbody>
       </table>
     </div>
@@ -76,7 +99,7 @@
 </div>
 
 <script>
-const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycby2XKkED5KURm6ivkkdLRsc02udWPozcFHXfV7Abe_tMtQOz090j8o3se2p-Fs4YI64nw/exec';
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbw5JEsWPniUe9_Nk-CJfrqfup1a5n1wBcoLstOa6fq4Acbsqj7hp-LtPkSZsD2B4Mg8_A/exec';
 document.getElementById('webapp').textContent = GAS_WEBAPP_URL;
 
 let currentRows = [];
@@ -95,7 +118,7 @@ function getParams(){
     airport: document.getElementById('airport').value.trim().toUpperCase(),
     startDate: document.getElementById('startDate').value,
     endDate: document.getElementById('endDate').value,
-    hourUtc: document.getElementById('hourUtc').value
+    targetLocalTime: document.getElementById('targetLocalTime').value
   };
 }
 
@@ -103,7 +126,7 @@ function validate(p){
   if (!p.airport || p.airport.length !== 4) return '공항코드는 4자리 ICAO로 입력하세요.';
   if (!p.startDate) return '시작일자를 입력하세요.';
   if (!p.endDate) return '종료일자를 입력하세요.';
-  if (!p.hourUtc) return '검색 시간을 입력하세요.';
+  if (!p.targetLocalTime) return 'LOCAL 기준 조회시간을 입력하세요.';
   if (p.startDate > p.endDate) return '시작일자가 종료일자보다 늦습니다.';
   return '';
 }
@@ -152,23 +175,27 @@ function escapeHtml(str){
 function renderRows(rows){
   document.getElementById('rowCount').textContent = rows.length;
   document.getElementById('metaAirport').textContent = currentParams.airport || '-';
+  document.getElementById('metaLocalTime').textContent = currentParams.targetLocalTime || '-';
   document.getElementById('metaPeriod').textContent =
-    currentParams.startDate ? `${currentParams.startDate} ~ ${currentParams.endDate} / ${currentParams.hourUtc} UTC` : '-';
+    currentParams.startDate ? `${currentParams.startDate} ~ ${currentParams.endDate}` : '-';
 
   const body = document.getElementById('resultBody');
+
   if (!rows.length){
-    body.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>';
+    body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>';
     return;
   }
 
   body.innerHTML = rows.map((r,i)=>`
     <tr>
       <td>${i+1}</td>
-      <td>${escapeHtml(r.date||'')}</td>
-      <td>${escapeHtml(r.time||'')}</td>
-      <td>${escapeHtml(r.day||'')}</td>
-      <td>${escapeHtml(r.type||'')}</td>
-      <td class="mono">${escapeHtml(r.report||'')}</td>
+      <td>${escapeHtml(r.utcDate || '')}</td>
+      <td>${escapeHtml(r.utcTime || '')}</td>
+      <td>${escapeHtml(r.localDate || '')}</td>
+      <td>${escapeHtml(r.localTime || '')}</td>
+      <td>${escapeHtml(r.localDay || '')}</td>
+      <td>${escapeHtml(r.type || '')}</td>
+      <td class="mono">${escapeHtml(r.report || '')}</td>
     </tr>
   `).join('');
 }
@@ -210,6 +237,7 @@ async function saveToSheet(){
 
 async function loadSheetInputs(){
   setStatus('시트 입력값 불러오는 중...', 'info');
+
   try{
     const data = await jsonpRequest({ action:'sheetInputs' });
     if (!data.ok) throw new Error(data.message || '불러오기 실패');
@@ -218,7 +246,7 @@ async function loadSheetInputs(){
     if (p.airport) document.getElementById('airport').value = p.airport;
     if (p.startDate) document.getElementById('startDate').value = p.startDate;
     if (p.endDate) document.getElementById('endDate').value = p.endDate;
-    if (p.hourUtc) document.getElementById('hourUtc').value = p.hourUtc;
+    if (p.targetLocalTime) document.getElementById('targetLocalTime').value = p.targetLocalTime;
 
     setStatus('시트 입력값을 불러왔습니다.', 'ok');
   }catch(e){
@@ -230,6 +258,9 @@ function clearResults(){
   currentRows = [];
   currentParams = {};
   renderRows([]);
+  document.getElementById('metaAirport').textContent = '-';
+  document.getElementById('metaLocalTime').textContent = '-';
+  document.getElementById('metaPeriod').textContent = '-';
   setStatus('초기화되었습니다.', 'info');
 }
 </script>

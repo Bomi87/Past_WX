@@ -8,21 +8,21 @@
     body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;padding:24px;color:#243b53}
     .wrap{max-width:1180px;margin:0 auto}
     .card{background:#fff;border:1px solid #d9e2ec;border-radius:16px;padding:18px;margin-bottom:16px}
-.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
-.grid > .field{min-width:0}
-.field label{display:block;font-size:13px;margin-bottom:6px;font-weight:700;color:#627d98}
-.field input{width:100%;min-width:0;height:42px;border:1px solid #d9e2ec;border-radius:10px;padding:0 12px;font-size:15px;box-sizing:border-box}
+    .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+    .grid > .field{min-width:0}
+    .field label{display:block;font-size:13px;margin-bottom:6px;font-weight:700;color:#627d98}
+    .field input{width:100%;min-width:0;height:42px;border:1px solid #d9e2ec;border-radius:10px;padding:0 12px;font-size:15px;box-sizing:border-box}
 
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.actions button{flex:0 0 auto}
-button{border:0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;min-width:105px;white-space:nowrap}
+    .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+    .actions button{flex:0 0 auto}
+    button{border:0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:700;cursor:pointer;min-width:105px;white-space:nowrap}
 
-@media (max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
-@media (max-width:700px){
-  .actions{gap:6px}
-  button{min-width:96px;padding:8px 10px;font-size:12px}
-}
-@media (max-width:560px){.grid{grid-template-columns:1fr}}
+    @media (max-width:900px){.grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:700px){
+      .actions{gap:6px}
+      button{min-width:96px;padding:8px 10px;font-size:12px}
+    }
+    @media (max-width:560px){.grid{grid-template-columns:1fr}}
     .primary{background:#1565c0;color:#fff}
     .secondary{background:#eef4ff;color:#0d47a1}
     .status{margin-top:12px;padding:12px 14px;border-radius:10px;background:#eef3f8;display:none;white-space:pre-wrap}
@@ -36,15 +36,13 @@ button{border:0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:7
     thead th{background:#f7fafc}
     .mono{font-family:Consolas,monospace}
     .meta{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;color:#627d98;font-size:13px}
-
   </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card">
-<h1 style="margin:0 0 8px;">✈️ 🌤️ Past WX Search</h1>
-<div style="color:#627d98">공항별 과거 기상 조회</div>
-  
+    <h1 style="margin:0 0 8px;">✈️ 🌤️ Past WX Search</h1>
+    <div style="color:#627d98">공항별 과거 기상 조회</div>
   </div>
 
   <div class="card">
@@ -63,13 +61,12 @@ button{border:0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:7
       </div>
       <div class="field">
         <label>LOCAL 기준 조회시간</label>
-<input id="targetLocalTime" type="text" inputmode="numeric" placeholder="16:00" value="" onblur="formatTargetLocalTime()" onchange="formatTargetLocalTime()">
+        <input id="targetLocalTime" type="text" inputmode="numeric" placeholder="16:00" value="" onblur="formatTargetLocalTime()" onchange="formatTargetLocalTime()">
       </div>
     </div>
 
     <div class="actions">
       <button class="primary" onclick="runSearch()">조회</button>
-
       <button class="secondary" onclick="clearResults()">초기화</button>
     </div>
 
@@ -92,8 +89,8 @@ button{border:0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:7
             <th>Date(UTC)</th>
             <th>UTC</th>
             <th>Report</th>
-           <th>Visibility</th>
-          <th>Wind</th>
+            <th>Visibility</th>
+            <th>Wind</th>
           </tr>
         </thead>
         <tbody id="resultBody">
@@ -107,7 +104,6 @@ button{border:0;border-radius:10px;padding:9px 12px;font-size:13px;font-weight:7
 <script>
 const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbyjqVMxWLCifoV4GRJyL9D48LLvIx0nmtQu-4vPGMP4WpQyeOCSWcjoXBSFZNwJP1rI/exec';
 
-
 let currentRows = [];
 let currentParams = {};
 let jsonpSeq = 0;
@@ -118,6 +114,7 @@ function setStatus(message, type='info'){
   el.style.display = 'block';
   el.textContent = message;
 }
+
 function formatTargetLocalTime(){
   const el = document.getElementById('targetLocalTime');
   if (!el.value.trim()) return;
@@ -163,6 +160,7 @@ function normalizeHour_(s) {
 
   return '16:00';
 }
+
 function getParams(){
   return {
     airport: document.getElementById('airport').value.trim().toUpperCase(),
@@ -222,6 +220,10 @@ function escapeHtml(str){
     .replaceAll("'","&#39;");
 }
 
+/* =========================
+   VISIBILITY
+========================= */
+
 function extractVisibilityMeters(report){
   const txt = String(report || '').toUpperCase();
   const values = [];
@@ -229,25 +231,56 @@ function extractVisibilityMeters(report){
   if (/\bCAVOK\b/.test(txt)) values.push(9999);
   if (/\bP6SM\b/.test(txt)) values.push(9999);
 
-  const fracMatches = txt.matchAll(/\b(\d)\/(\d)SM\b/g);
-  for (const m of fracMatches) {
+  // 혼합분수: 2 1/2SM
+  const mixedFracMatches = txt.matchAll(/\b(\d+)\s+(\d+)\/(\d+)SM\b/g);
+  for (const m of mixedFracMatches) {
+    const whole = Number(m[1]);
+    const num = Number(m[2]);
+    const den = Number(m[3]);
+    if (den > 0) values.push(Math.round((whole + num / den) * 1609.34));
+  }
+
+  // M1/4SM
+  const lessThanFracMatches = txt.matchAll(/\bM(\d+)\/(\d+)SM\b/g);
+  for (const m of lessThanFracMatches) {
     const num = Number(m[1]);
     const den = Number(m[2]);
     if (den > 0) values.push(Math.round((num / den) * 1609.34));
   }
 
+  // 1/2SM
+  const fracMatches = txt.matchAll(/\b(\d+)\/(\d+)SM\b/g);
+  for (const m of fracMatches) {
+    const start = m.index ?? -1;
+    if (start > 0) {
+      const prevChar = txt[start - 1];
+      if (/\d|M/.test(prevChar)) continue;
+    }
+    const num = Number(m[1]);
+    const den = Number(m[2]);
+    if (den > 0) values.push(Math.round((num / den) * 1609.34));
+  }
+
+  // 2SM, 6SM
   const wholeMatches = txt.matchAll(/\b(\d+)SM\b/g);
   for (const m of wholeMatches) {
+    const start = m.index ?? -1;
+    if (start > 0) {
+      const prevChunk = txt.slice(Math.max(0, start - 4), start);
+      if (/\d\/\d\s*$/.test(prevChunk) || /M\s*$/.test(prevChunk)) continue;
+    }
     values.push(Math.round(Number(m[1]) * 1609.34));
   }
 
+  // RVR
   const rvrMatches = txt.matchAll(/\bR\d{2}[LRC]?\/P?(\d{4})[UDN]?\b/g);
   for (const m of rvrMatches) {
     values.push(Number(m[1]));
   }
 
+  // prevailing visibility 9999 / 0800 / 3000 ...
   const prevailingMatch = txt.match(
-    /\b(?:METAR|SPECI)\s+[A-Z0-9]{4}\s+\d{6}Z\s+(?:\d{3}|VRB)\d{2,3}(?:G\d{2,3})?KT(?:\s+\d{3}V\d{3})?\s+(\d{4})\b/
+    /\b(?:METAR|SPECI)\s+[A-Z0-9]{4}\s+\d{6}Z\s+(?:\d{3}|VRB)\d{2,3}(?:G\d{2,3})?(?:KT|MPS)(?:\s+\d{3}V\d{3})?\s+(\d{4})\b/
   );
   if (prevailingMatch) {
     values.push(Number(prevailingMatch[1]));
@@ -256,31 +289,92 @@ function extractVisibilityMeters(report){
   if (!values.length) return '';
   return Math.min(...values);
 }
-function extractWindKt(report){
+
+/* =========================
+   WIND
+========================= */
+
+function extractWindToken(report){
   const txt = String(report || '').toUpperCase();
-  const m = txt.match(/\b(?:\d{3}|VRB)(\d{2,3})(?:G\d{2,3})?KT\b/);
-  if (m) {
-    const val = Number(m[1]);
-    if (!isNaN(val)) return val;
-  }
-  return '';
+  const m = txt.match(/\b(?:\d{3}|VRB)\d{2,3}(?:G\d{2,3})?(?:KT|MPS)\b/);
+  return m ? m[0] : '';
 }
+
+function parseWindInfo(windToken){
+  if (!windToken) {
+    return {
+      display: '',
+      speedKt: null,
+      gustKt: null,
+      highlightBlue: false
+    };
+  }
+
+  const s = String(windToken).toUpperCase().trim();
+  const m = s.match(/^(\d{3}|VRB)(\d{2,3})(?:G(\d{2,3}))?(KT|MPS)$/);
+  if (!m) {
+    return {
+      display: '',
+      speedKt: null,
+      gustKt: null,
+      highlightBlue: false
+    };
+  }
+
+  let speed = Number(m[2]);
+  let gust = m[3] ? Number(m[3]) : null;
+  const unit = m[4];
+
+  let speedKt = speed;
+  let gustKt = gust;
+
+  // MPS → KT 환산
+  if (unit === 'MPS') {
+    speedKt = Math.round(speed * 1.94384);
+    gustKt = gust != null ? Math.round(gust * 1.94384) : null;
+  }
+
+  const highlightBlue =
+    speedKt >= 20 ||
+    (gustKt != null && gustKt >= 25);
+
+  return {
+    display: gustKt != null ? `${speedKt}G${gustKt}kt` : `${speedKt}kt`,
+    speedKt: speedKt,
+    gustKt: gustKt,
+    highlightBlue: highlightBlue
+  };
+}
+
+function extractWindKt(report){
+  const token = extractWindToken(report);
+  const info = parseWindInfo(token);
+  return info.speedKt == null ? '' : info.speedKt;
+}
+
+/* =========================
+   COLOR
+========================= */
 
 function getCellColor(type, value){
   const v = Number(value);
   if (value === '' || isNaN(v)) return '';
 
   if (type === 'vis') {
-    if (v <= 700) return '#f4cccc';     // 빨강
-    if (v > 700 && v <= 1200) return '#fce5cd'; // 주황
+    if (v <= 700) return '#f4cccc';
+    if (v > 700 && v <= 1200) return '#fce5cd';
   }
 
   if (type === 'wind') {
-    if (v >= 25) return '#cfe2f3';      // 파랑
+    if (v >= 1) return '#cfe2f3';
   }
 
   return '';
 }
+
+/* =========================
+   RENDER
+========================= */
 
 function renderRows(rows){
   document.getElementById('rowCount').textContent = rows.length;
@@ -297,19 +391,21 @@ function renderRows(rows){
   }
 
   body.innerHTML = rows.map((r,i)=>{
-const visRaw = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : extractVisibilityMeters(r.report);
-const windRaw = (r.windKt ?? '') !== '' ? r.windKt : extractWindKt(r.report);
+    const visRaw = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : extractVisibilityMeters(r.report);
 
-const visColor = getCellColor('vis', visRaw);
-const windColor = getCellColor('wind', windRaw);
+    const windToken = extractWindToken(r.report);
+    const windInfo = parseWindInfo(windToken);
 
-const vis = visRaw === '' ? '' : visRaw + 'm';
-const wind = windRaw === '' ? '' : windRaw + 'kt';
+    const visColor = getCellColor('vis', visRaw);
+    const windColor = windInfo.highlightBlue ? '#cfe2f3' : '';
+
+    const vis = visRaw === '' ? '' : visRaw + 'm';
+    const wind = windInfo.display || '';
 
     return `
       <tr>
         <td>${i+1}</td>
-       <td style="white-space:nowrap;">${escapeHtml(r.utcDate || '')}</td>
+        <td style="white-space:nowrap;">${escapeHtml(r.utcDate || '')}</td>
         <td style="white-space:nowrap;">${escapeHtml(r.utcTime || '')}</td>
         <td class="mono">${escapeHtml(r.report || '')}</td>
         <td style="background:${visColor};">${escapeHtml(vis)}</td>

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>OGIMET METAR Search</title>
+    <style>
+      :root {
+        --bg: #0b1220;
+        --card: #121a2b;
+        --muted: #8ea0bf;
+        --text: #eef4ff;
+        --line: #24314d;
+        --accent: #5da8ff;
+        --accent-2: #75e0a7;
+        --danger: #ff8b8b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(180deg, #0b1220 0%, #101827 100%);
+        color: var(--text);
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 24px;
+      }
+      .title {
+        font-size: 28px;
+        font-weight: 700;
+        margin-bottom: 8px;
+      }
+      .sub {
+        color: var(--muted);
+        margin-bottom: 20px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(12, 1fr);
+        gap: 14px;
+      }
+      .card {
+        background: rgba(18, 26, 43, 0.92);
+        border: 1px solid var(--line);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+      }
+      .controls { grid-column: span 12; }
+      .results { grid-column: span 12; }
+      .field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .field label {
+        font-size: 12px;
+        color: var(--muted);
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+      }
+      .field input, .field select, .field textarea {
+        width: 100%;
+        background: #0d1526;
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 11px 12px;
+        outline: none;
+        font-size: 14px;
+      }
+      .field input:focus, .field select:focus, .field textarea:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(93, 168, 255, 0.12);
+      }
+      .row {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 14px;
+      }
+      .row + .row { margin-top: 14px; }
+      .buttons {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 16px;
+      }
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 11px 16px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .btn-primary {
+        background: var(--accent);
+        color: #08111d;
+      }
+      .btn-secondary {
+        background: #1a2740;
+        color: var(--text);
+        border: 1px solid var(--line);
+      }
+      .btn-success {
+        background: var(--accent-2);
+        color: #08111d;
+      }
+      .status {
+        margin-top: 14px;
+        font-size: 14px;
+        min-height: 20px;
+      }
+      .status.error { color: var(--danger); }
+      .status.ok { color: var(--accent-2); }
+      .pill {
+        display: inline-block;
+        font-size: 12px;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      .table-wrap {
+        overflow: auto;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 860px;
+      }
+      thead th {
+        position: sticky;
+        top: 0;
+        background: #10192d;
+        color: var(--muted);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      th, td {
+        padding: 10px 12px;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+        font-size: 14px;
+      }
+      tbody tr:hover { background: rgba(255,255,255,0.02); }
+      .mono { font-family: Consolas, Menlo, monospace; white-space: pre-wrap; }
+      @media (max-width: 900px) {
+        .row { grid-template-columns: 1fr 1fr; }
+      }
+      @media (max-width: 600px) {
+        .wrap { padding: 14px; }
+        .row { grid-template-columns: 1fr; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="title">OGIMET METAR Search</div>
+      <div class="sub">Google Apps Script 웹앱용 화면입니다. 조회 후 결과를 시트에도 저장할 수 있습니다.</div>
+
+      <div class="grid">
+        <div class="card controls">
+          <div class="pill">Input</div>
+
+          <div class="row">
+            <div class="field">
+              <label for="airport">Airport ICAO</label>
+              <input id="airport" type="text" placeholder="RKSI" maxlength="4" />
+            </div>
+            <div class="field">
+              <label for="startDate">Start Date (UTC)</label>
+              <input id="startDate" type="date" />
+            </div>
+            <div class="field">
+              <label for="endDate">End Date (UTC)</label>
+              <input id="endDate" type="date" />
+            </div>
+            <div class="field">
+              <label for="hourUtc">Hour (UTC)</label>
+              <input id="hourUtc" type="time" step="3600" value="16:00" />
+            </div>
+            <div class="field">
+              <label for="sa">SA / SP / Both</label>
+              <select id="sa">
+                <option value="SA" selected>SA</option>
+                <option value="SP">SP</option>
+                <option value="SA SP">SA + SP</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="old">Visibility Filter</label>
+              <select id="old">
+                <option value="NO">NO</option>
+                <option value="YES">YES</option>
+                <option value="ALL" selected>ALL</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="buttons">
+            <button class="btn-primary" onclick="runSearch()">조회</button>
+            <button class="btn-secondary" onclick="loadSheetInputs()">시트값 불러오기</button>
+            <button class="btn-success" onclick="saveToSheet()">결과를 시트에 저장</button>
+            <button class="btn-secondary" onclick="clearResults()">초기화</button>
+          </div>
+
+          <div id="status" class="status"></div>
+        </div>
+
+        <div class="card results">
+          <div class="pill">Results</div>
+          <div class="table-wrap">
+            <table id="resultTable">
+              <thead>
+                <tr>
+                  <th>#</th>
+                  <th>ICAO</th>
+                  <th>Date/Time UTC</th>
+                  <th>Report</th>
+                </tr>
+              </thead>
+              <tbody id="resultBody">
+                <tr><td colspan="4" style="color:#8ea0bf;">아직 결과가 없습니다.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let currentRows = [];
+      let currentParams = {};
+
+      function setStatus(message, type) {
+        const el = document.getElementById('status');
+        el.textContent = message || '';
+        el.className = 'status' + (type ? ' ' + type : '');
+      }
+
+      function getParamsFromForm() {
+        return {
+          airport: (document.getElementById('airport').value || '').trim().toUpperCase(),
+          startDate: document.getElementById('startDate').value,
+          endDate: document.getElementById('endDate').value,
+          hourUtc: document.getElementById('hourUtc').value,
+          sa: document.getElementById('sa').value,
+          old: document.getElementById('old').value
+        };
+      }
+
+      function validateParams(p) {
+        if (!p.airport) return '공항 ICAO를 입력하세요.';
+        if (!p.startDate) return '시작일자를 입력하세요.';
+        if (!p.endDate) return '종료일자를 입력하세요.';
+        if (!p.hourUtc) return 'UTC 시간을 입력하세요.';
+        return '';
+      }
+
+      function renderRows(rows) {
+        const body = document.getElementById('resultBody');
+        if (!rows || !rows.length) {
+          body.innerHTML = '<tr><td colspan="4" style="color:#8ea0bf;">조회 결과가 없습니다.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = rows.map((r, i) => {
+          const dt = [r.year, pad2(r.month), pad2(r.day)].join('-') + ' ' + pad2(r.hour) + ':' + pad2(r.min) + 'Z';
+          return `
+            <tr>
+              <td>${i + 1}</td>
+              <td>${escapeHtml(r.icao || '')}</td>
+              <td>${escapeHtml(dt)}</td>
+              <td class="mono">${escapeHtml(r.report || '')}</td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function pad2(v) {
+        return String(v).padStart(2, '0');
+      }
+
+      function escapeHtml(text) {
+        return String(text)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;');
+      }
+
+      function runSearch() {
+        const params = getParamsFromForm();
+        const err = validateParams(params);
+        if (err) {
+          setStatus(err, 'error');
+          return;
+        }
+
+        setStatus('조회 중...', '');
+        currentParams = params;
+        google.script.run
+          .withSuccessHandler(function(res) {
+            currentRows = Array.isArray(res) ? res : [];
+            renderRows(currentRows);
+            setStatus('조회 완료: ' + currentRows.length + '건', 'ok');
+          })
+          .withFailureHandler(function(err) {
+            console.error(err);
+            setStatus('조회 실패: ' + (err && err.message ? err.message : err), 'error');
+          })
+          .searchOgimet(params);
+      }
+
+      function saveToSheet() {
+        if (!currentRows.length) {
+          setStatus('먼저 조회를 실행하세요.', 'error');
+          return;
+        }
+        setStatus('시트 저장 중...', '');
+        google.script.run
+          .withSuccessHandler(function(msg) {
+            setStatus(msg || '시트 저장 완료', 'ok');
+          })
+          .withFailureHandler(function(err) {
+            console.error(err);
+            setStatus('시트 저장 실패: ' + (err && err.message ? err.message : err), 'error');
+          })
+          .saveResultsToSheet(currentRows, currentParams);
+      }
+
+      function loadSheetInputs() {
+        setStatus('시트값 불러오는 중...', '');
+        google.script.run
+          .withSuccessHandler(function(data) {
+            if (!data) {
+              setStatus('시트값을 불러오지 못했습니다.', 'error');
+              return;
+            }
+            document.getElementById('airport').value = data.airport || '';
+            document.getElementById('startDate').value = data.startDate || '';
+            document.getElementById('endDate').value = data.endDate || '';
+            document.getElementById('hourUtc').value = data.hourUtc || '16:00';
+            document.getElementById('sa').value = data.sa || 'SA';
+            document.getElementById('old').value = data.old || 'ALL';
+            setStatus('시트값 불러오기 완료', 'ok');
+          })
+          .withFailureHandler(function(err) {
+            console.error(err);
+            setStatus('시트값 불러오기 실패: ' + (err && err.message ? err.message : err), 'error');
+          })
+          .getSheetInputs();
+      }
+
+      function clearResults() {
+        currentRows = [];
+        currentParams = {};
+        renderRows([]);
+        setStatus('', '');
+      }
+    </script>
+  </body>
+</html>

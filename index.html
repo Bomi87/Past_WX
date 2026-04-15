@@ -477,9 +477,9 @@ async function runSearch(){
     renderRows(currentRows);
     setStatus(`조회 완료: ${currentRows.length}건`, currentRows.length ? 'ok' : 'warn');
 
-    if (currentRows.length) {
-      openResultModal();
-    }
+ if (currentRows.length && window.innerWidth <= 768) {
+  openResultModal();
+}
   }catch(e){
     setStatus('조회 실패: ' + e.message, 'error');
   }finally{

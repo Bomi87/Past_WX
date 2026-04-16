@@ -220,10 +220,11 @@
       </div>
     </div>
 
-    <div class="actions">
-      <button id="searchBtn" class="primary" onclick="runSearch()">조회</button>
-      <button class="secondary" onclick="clearResults()">초기화</button>
-    </div>
+<div class="actions">
+  <button id="searchBtn" class="primary" onclick="runSearch()">조회</button>
+  <button class="secondary" onclick="clearResults()">초기화</button>
+  <button class="secondary" onclick="exportResultPdf()">PDF 공유</button>
+</div>
 
     <div id="status" class="status info"></div>
   </div>
@@ -534,6 +535,359 @@ function clearResults(){
   setStatus('초기화되었습니다.', 'info');
   closeResultModal();
 }
+  <script>
+const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxe-zKcDq63h4imWUe-YCVB2r1v5M4jkO_w6OzycbJJ0MBmKDfBMCkQHE4chmp1bvuJeA/exec';
+const WX_HIGHLIGHT_CODES = ['TS','GR','GS','FZ','FG','SN','FC','VA','SG','PL','SS','DS','SQ'];
+
+let currentRows = [];
+let currentParams = {};
+let jsonpSeq = 0;
+
+function hasHighlightedWeather(wxText){
+  const s = String(wxText || '').toUpperCase();
+  if (!s) return false;
+  return s.indexOf('+') > -1 || WX_HIGHLIGHT_CODES.some(code => s.indexOf(code) > -1);
+}
+
+function setStatus(message, type='info'){
+  const el = document.getElementById('status');
+  el.className = 'status ' + type;
+  el.style.display = 'block';
+  el.textContent = message;
+}
+
+function formatTargetLocalTime(){
+  const el = document.getElementById('targetLocalTime');
+  if (!el.value.trim()) return;
+  el.value = normalizeHour_(el.value);
+}
+
+function normalizeHour_(s) {
+  s = String(s || '').trim();
+
+  if (!s) return '16:00';
+
+  if (/^\d{3}$/.test(s)) {
+    const hh = '0' + s.slice(0, 1);
+    const mm = s.slice(1, 3);
+    if (Number(hh) <= 23 && Number(mm) <= 59) return hh + ':' + mm;
+  }
+
+  if (/^\d{4}$/.test(s)) {
+    const hh = s.slice(0, 2);
+    const mm = s.slice(2, 4);
+    if (Number(hh) <= 23 && Number(mm) <= 59) return hh + ':' + mm;
+  }
+
+  if (/^\d{1,2}$/.test(s)) {
+    const hh = ('0' + Number(s)).slice(-2);
+    if (Number(hh) <= 23) return hh + ':00';
+  }
+
+  const m = s.match(/^(\d{1,2}):(\d{2})$/);
+  if (m) {
+    const hh = ('0' + Number(m[1])).slice(-2);
+    const mm = ('0' + Number(m[2])).slice(-2);
+    if (Number(hh) <= 23 && Number(mm) <= 59) return hh + ':' + mm;
+  }
+
+  return '16:00';
+}
+
+function getParams(){
+  return {
+    airport: document.getElementById('airport').value.trim().toUpperCase(),
+    startDate: document.getElementById('startDate').value,
+    endDate: document.getElementById('endDate').value,
+    targetLocalTime: document.getElementById('targetLocalTime').value
+  };
+}
+
+function validate(p){
+  if (!p.airport || p.airport.length !== 4) return '공항코드는 4자리 ICAO로 입력하세요.';
+  if (!p.startDate) return '시작일자를 입력하세요.';
+  if (!p.endDate) return '종료일자를 입력하세요.';
+  if (!p.targetLocalTime) return 'LOCAL 기준 조회시간을 입력하세요.';
+  if (p.startDate > p.endDate) return '시작일자가 종료일자보다 늦습니다.';
+  return '';
+}
+
+function jsonpRequest(params){
+  return new Promise((resolve, reject) => {
+    const cb = '__jsonp_cb_' + (++jsonpSeq);
+    const script = document.createElement('script');
+    const qs = new URLSearchParams({...params, prefix: cb}).toString();
+
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('응답 시간 초과'));
+    }, 120000);
+
+    function cleanup(){
+      clearTimeout(timer);
+      if (script.parentNode) script.parentNode.removeChild(script);
+      try { delete window[cb]; } catch(e) { window[cb] = undefined; }
+    }
+
+    window[cb] = function(data){
+      cleanup();
+      resolve(data);
+    };
+
+    script.onerror = function(){
+      cleanup();
+      reject(new Error('JSONP 로드 실패'));
+    };
+
+    script.src = GAS_WEBAPP_URL + '?' + qs;
+    document.body.appendChild(script);
+  });
+}
+
+function escapeHtml(str){
+  return String(str ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;')
+    .replaceAll("'","&#39;");
+}
+
+function getCellColor(type, value){
+  const v = Number(value);
+  if (value === '' || isNaN(v)) return '';
+
+  if (type === 'vis') {
+    if (v <= 700) return '#f4cccc';
+    if (v > 700 && v <= 1200) return '#fce5cd';
+  }
+
+  return '';
+}
+
+function buildRowsHtml(rows){
+  if (!rows.length){
+    return '<tr><td colspan="7" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>';
+  }
+
+  return rows.map((r,i)=>{
+    const wx = r.phenomena || '';
+    const wxColor = hasHighlightedWeather(wx) ? '#f4cccc' : '';
+
+    const visRaw = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : '';
+    const visColor = getCellColor('vis', visRaw);
+    const vis = visRaw === '' ? '' : visRaw + 'm';
+
+    const wind = r.windDisplay || '';
+    const windColor = r.windBlue ? '#cfe2f3' : '';
+
+    return `
+      <tr>
+        <td>${i+1}</td>
+        <td style="white-space:nowrap;">${escapeHtml(r.utcDate || '')}</td>
+        <td style="white-space:nowrap;">${escapeHtml(r.utcTime || '')}</td>
+        <td class="mono">${escapeHtml(r.report || '')}</td>
+        <td style="background:${wxColor};">${escapeHtml(wx)}</td>
+        <td style="background:${visColor};">${escapeHtml(vis)}</td>
+        <td style="background:${windColor};">${escapeHtml(wind)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function renderRows(rows){
+  document.getElementById('rowCount').textContent = rows.length;
+  document.getElementById('metaAirport').textContent = currentParams.airport || '-';
+  document.getElementById('metaLocalTime').textContent = currentParams.targetLocalTime || '-';
+  document.getElementById('metaPeriod').textContent =
+    currentParams.startDate ? `${currentParams.startDate} ~ ${currentParams.endDate}` : '-';
+
+  const html = buildRowsHtml(rows);
+  document.getElementById('resultBody').innerHTML = html;
+  document.getElementById('modalResultBody').innerHTML = html;
+
+  document.getElementById('modalMeta').innerHTML = `
+    <div>결과 건수: <strong>${rows.length}</strong></div>
+    <div>공항: <strong>${escapeHtml(currentParams.airport || '-')}</strong></div>
+    <div>기준 LOCAL 시간: <strong>${escapeHtml(currentParams.targetLocalTime || '-')}</strong></div>
+    <div>기간: <strong>${escapeHtml(currentParams.startDate ? `${currentParams.startDate} ~ ${currentParams.endDate}` : '-')}</strong></div>
+  `;
+}
+
+function openResultModal(){
+  const modal = document.getElementById('resultModal');
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeResultModal(){
+  const modal = document.getElementById('resultModal');
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function handleModalBackdrop(event){
+  if (event.target.id === 'resultModal') {
+    closeResultModal();
+  }
+}
+
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') closeResultModal();
+});
+
+async function runSearch(){
+  const btn = document.getElementById('searchBtn');
+  if (btn) btn.disabled = true;
+
+  const p = getParams();
+  const err = validate(p);
+  if (err){
+    setStatus(err, 'error');
+    if (btn) btn.disabled = false;
+    return;
+  }
+
+  currentParams = p;
+  setStatus('조회 중...', 'info');
+
+  try{
+    const data = await jsonpRequest({ action:'search', ...p });
+    if (!data.ok) throw new Error(data.message || '조회 실패');
+
+    currentRows = Array.isArray(data.rows) ? data.rows : [];
+    renderRows(currentRows);
+    setStatus(`조회 완료: ${currentRows.length}건`, currentRows.length ? 'ok' : 'warn');
+
+    if (currentRows.length && window.innerWidth <= 768) {
+      openResultModal();
+    }
+  }catch(e){
+    setStatus('조회 실패: ' + e.message, 'error');
+  }finally{
+    if (btn) btn.disabled = false;
+  }
+}
+
+function clearResults(){
+  currentRows = [];
+  currentParams = {};
+  renderRows([]);
+  document.getElementById('metaAirport').textContent = '-';
+  document.getElementById('metaLocalTime').textContent = '-';
+  document.getElementById('metaPeriod').textContent = '-';
+  setStatus('초기화되었습니다.', 'info');
+  closeResultModal();
+}
+
+function exportResultPdf(){
+  if (!currentRows.length) {
+    setStatus('먼저 조회 결과를 생성하세요.', 'warn');
+    return;
+  }
+
+  const title = `Historical_WX_${currentParams.airport || 'AIRPORT'}_${currentParams.startDate || ''}_${currentParams.endDate || ''}`;
+  const rowsHtml = buildRowsHtml(currentRows);
+
+  const printHtml = `
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<title>${escapeHtml(title)}</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  body{
+    font-family: Arial, sans-serif;
+    color:#243b53;
+    margin:0;
+    padding:0;
+  }
+  .head{
+    margin-bottom:12px;
+  }
+  .title{
+    font-size:20px;
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  .meta{
+    display:flex;
+    gap:18px;
+    flex-wrap:wrap;
+    font-size:12px;
+    color:#486581;
+    margin-bottom:12px;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    table-layout:fixed;
+  }
+  th, td{
+    border:1px solid #d9e2ec;
+    padding:6px 8px;
+    font-size:11px;
+    vertical-align:top;
+    word-break:break-word;
+  }
+  th{
+    background:#f7fafc;
+  }
+  .mono{
+    font-family: Consolas, monospace;
+    font-size:10px;
+  }
+</style>
+</head>
+<body>
+  <div class="head">
+    <div class="title">Historical Airport Weather Analysis</div>
+    <div class="meta">
+      <div>공항: <strong>${escapeHtml(currentParams.airport || '-')}</strong></div>
+      <div>기준 LOCAL 시간: <strong>${escapeHtml(currentParams.targetLocalTime || '-')}</strong></div>
+      <div>기간: <strong>${escapeHtml(currentParams.startDate || '-')} ~ ${escapeHtml(currentParams.endDate || '-')}</strong></div>
+      <div>결과 건수: <strong>${currentRows.length}</strong></div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:42px;">No</th>
+        <th style="width:110px;">Date(UTC)</th>
+        <th style="width:70px;">UTC</th>
+        <th>Report</th>
+        <th style="width:110px;">Phenomena</th>
+        <th style="width:90px;">Visibility</th>
+        <th style="width:90px;">Wind</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rowsHtml}
+    </tbody>
+  </table>
+</body>
+</html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) {
+    setStatus('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.', 'error');
+    return;
+  }
+
+  win.document.open();
+  win.document.write(printHtml);
+  win.document.close();
+
+  win.onload = function(){
+    setTimeout(() => {
+      win.focus();
+      win.print();
+    }, 300);
+  };
+}
 </script>
+
 </body>
 </html>

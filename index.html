@@ -368,7 +368,7 @@ function normalizeHour_(s) {
 
   return '16:00';
 }
-<script>
+
 function formatDateToYYYYMMDD(date){
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -407,7 +407,7 @@ function presetEndDateIfEmpty(){
     endEl.value = addDaysToDateString(startEl.value, 30);
   }
 }
-</script>
+
 function getParams(){
   return {
     airport: document.getElementById('airport').value.trim().toUpperCase(),

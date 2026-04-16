@@ -186,6 +186,63 @@
         padding:6px 8px;
       }
     }
+
+    .pdf-export-root{
+      position:fixed;
+      left:-100000px;
+      top:0;
+      width:1400px;
+      background:#ffffff;
+      z-index:-1;
+      padding:0;
+      margin:0;
+    }
+
+    .pdf-page{
+      font-family:Arial,sans-serif;
+      color:#243b53;
+      background:#ffffff;
+      padding:20px;
+    }
+
+    .pdf-title{
+      font-size:22px;
+      font-weight:700;
+      margin-bottom:8px;
+    }
+
+    .pdf-meta{
+      display:flex;
+      gap:18px;
+      flex-wrap:wrap;
+      font-size:13px;
+      color:#486581;
+      margin-bottom:14px;
+    }
+
+    .pdf-table{
+      width:100%;
+      border-collapse:collapse;
+      table-layout:fixed;
+    }
+
+    .pdf-table th,
+    .pdf-table td{
+      border:1px solid #d9e2ec;
+      padding:7px 8px;
+      font-size:12px;
+      vertical-align:top;
+      word-break:break-word;
+    }
+
+    .pdf-table th{
+      background:#f7fafc;
+    }
+
+    .pdf-mono{
+      font-family:Consolas,monospace;
+      font-size:11px;
+    }
   </style>
 </head>
 <body>
@@ -289,6 +346,8 @@
     </div>
   </div>
 </div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <script>
 const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxe-zKcDq63h4imWUe-YCVB2r1v5M4jkO_w6OzycbJJ0MBmKDfBMCkQHE4chmp1bvuJeA/exec';
@@ -543,123 +602,112 @@ function clearResults(){
   closeResultModal();
 }
 
-function exportResultPdf(){
+function createPdfElement(){
+  const root = document.createElement('div');
+  root.className = 'pdf-export-root';
+
+  const rowsHtml = currentRows.length ? currentRows.map((r,i)=>{
+    const wx = r.phenomena || '';
+    const wxColor = hasHighlightedWeather(wx) ? '#f4cccc' : '';
+
+    const visRaw = (r.visibilityMeters ?? '') !== '' ? r.visibilityMeters : '';
+    const visColor = getCellColor('vis', visRaw);
+    const vis = visRaw === '' ? '' : visRaw + 'm';
+
+    const wind = r.windDisplay || '';
+    const windColor = r.windBlue ? '#cfe2f3' : '';
+
+    return `
+      <tr>
+        <td style="width:44px;">${i+1}</td>
+        <td style="width:110px;white-space:nowrap;">${escapeHtml(r.utcDate || '')}</td>
+        <td style="width:70px;white-space:nowrap;">${escapeHtml(r.utcTime || '')}</td>
+        <td class="pdf-mono">${escapeHtml(r.report || '')}</td>
+        <td style="width:110px;background:${wxColor};">${escapeHtml(wx)}</td>
+        <td style="width:90px;background:${visColor};">${escapeHtml(vis)}</td>
+        <td style="width:90px;background:${windColor};">${escapeHtml(wind)}</td>
+      </tr>
+    `;
+  }).join('') : '<tr><td colspan="7" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>';
+
+  root.innerHTML = `
+    <div class="pdf-page">
+      <div class="pdf-title">Historical Airport Weather Analysis</div>
+      <div class="pdf-meta">
+        <div>공항: <strong>${escapeHtml(currentParams.airport || '-')}</strong></div>
+        <div>기준 LOCAL 시간: <strong>${escapeHtml(currentParams.targetLocalTime || '-')}</strong></div>
+        <div>기간: <strong>${escapeHtml(currentParams.startDate || '-')} ~ ${escapeHtml(currentParams.endDate || '-')}</strong></div>
+        <div>결과 건수: <strong>${currentRows.length}</strong></div>
+      </div>
+
+      <table class="pdf-table">
+        <thead>
+          <tr>
+            <th style="width:44px;">No</th>
+            <th style="width:110px;">Date(UTC)</th>
+            <th style="width:70px;">UTC</th>
+            <th>Report</th>
+            <th style="width:110px;">Phenomena</th>
+            <th style="width:90px;">Visibility</th>
+            <th style="width:90px;">Wind</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rowsHtml}
+        </tbody>
+      </table>
+    </div>
+  `;
+  return root;
+}
+
+async function exportResultPdf(){
   if (!currentRows.length) {
     setStatus('먼저 조회 결과를 생성하세요.', 'warn');
     return;
   }
 
-  const title = `Historical_WX_${currentParams.airport || 'AIRPORT'}_${currentParams.startDate || ''}_${currentParams.endDate || ''}`;
-  const rowsHtml = buildRowsHtml(currentRows);
-
-  const printHtml = `
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-<meta charset="UTF-8">
-<title>${escapeHtml(title)}</title>
-<style>
-  @page { size: A4 landscape; margin: 12mm; }
-
-  *{
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  html, body{
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
-  }
-
-  body{
-    font-family: Arial, sans-serif;
-    color:#243b53;
-    margin:0;
-    padding:0;
-  }
-  .head{
-    margin-bottom:12px;
-  }
-  .title{
-    font-size:20px;
-    font-weight:700;
-    margin-bottom:6px;
-  }
-  .meta{
-    display:flex;
-    gap:18px;
-    flex-wrap:wrap;
-    font-size:12px;
-    color:#486581;
-    margin-bottom:12px;
-  }
-  table{
-    width:100%;
-    border-collapse:collapse;
-    table-layout:fixed;
-  }
-  th, td{
-    border:1px solid #d9e2ec;
-    padding:6px 8px;
-    font-size:11px;
-    vertical-align:top;
-    word-break:break-word;
-  }
-  th{
-    background:#f7fafc;
-  }
-  .mono{
-    font-family: Consolas, monospace;
-    font-size:10px;
-  }
-</style>
-</head>
-<body>
-  <div class="head">
-    <div class="title">Historical Airport Weather Analysis</div>
-    <div class="meta">
-      <div>공항: <strong>${escapeHtml(currentParams.airport || '-')}</strong></div>
-      <div>기준 LOCAL 시간: <strong>${escapeHtml(currentParams.targetLocalTime || '-')}</strong></div>
-      <div>기간: <strong>${escapeHtml(currentParams.startDate || '-')} ~ ${escapeHtml(currentParams.endDate || '-')}</strong></div>
-      <div>결과 건수: <strong>${currentRows.length}</strong></div>
-    </div>
-  </div>
-
-  <table>
-    <thead>
-      <tr>
-        <th style="width:42px;">No</th>
-        <th style="width:110px;">Date(UTC)</th>
-        <th style="width:70px;">UTC</th>
-        <th>Report</th>
-        <th style="width:110px;">Phenomena</th>
-        <th style="width:90px;">Visibility</th>
-        <th style="width:90px;">Wind</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${rowsHtml}
-    </tbody>
-  </table>
-</body>
-</html>`;
-
-  const win = window.open('', '_blank');
-  if (!win) {
-    setStatus('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.', 'error');
+  if (typeof html2pdf === 'undefined') {
+    setStatus('PDF 라이브러리를 불러오지 못했습니다.', 'error');
     return;
   }
 
-  win.document.open();
-  win.document.write(printHtml);
-  win.document.close();
+  const btn = document.getElementById('pdfBtn');
+  if (btn) btn.disabled = true;
 
-  win.onload = function(){
-    setTimeout(() => {
-      win.focus();
-      win.print();
-    }, 300);
-  };
+  const filename = `Historical_WX_${currentParams.airport || 'AIRPORT'}_${currentParams.startDate || ''}_${currentParams.endDate || ''}.pdf`;
+  const pdfEl = createPdfElement();
+  document.body.appendChild(pdfEl);
+
+  setStatus('PDF 생성 중...', 'info');
+
+  try{
+    const opt = {
+      margin: [8, 8, 8, 8],
+      filename: filename,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'landscape'
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    await html2pdf().set(opt).from(pdfEl).save();
+    setStatus('PDF 생성 완료', 'ok');
+  }catch(e){
+    setStatus('PDF 생성 실패: ' + (e && e.message ? e.message : e), 'error');
+  }finally{
+    if (pdfEl && pdfEl.parentNode) pdfEl.parentNode.removeChild(pdfEl);
+    updatePdfButton();
+  }
 }
 
 updatePdfButton();

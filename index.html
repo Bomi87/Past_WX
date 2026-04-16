@@ -84,9 +84,10 @@
       white-space:nowrap;
     }
 
-    .pc-only{display:inline-block}
     @media (max-width:768px){
-      .pc-only{display:none !important}
+      #pdfBtn{
+        display:none !important;
+      }
     }
 
     @media (max-width:700px){
@@ -228,7 +229,7 @@
     <div class="actions">
       <button id="searchBtn" class="primary" onclick="runSearch()">조회</button>
       <button class="secondary" onclick="clearResults()">초기화</button>
-      <button id="pdfBtn" class="secondary pc-only" onclick="exportResultPdf()" disabled>PDF 저장</button>
+      <button id="pdfBtn" class="secondary" onclick="exportResultPdf()" disabled>PDF 저장</button>
     </div>
 
     <div id="status" class="status info"></div>

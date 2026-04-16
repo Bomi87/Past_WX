@@ -214,11 +214,11 @@
       </div>
       <div class="field">
         <label>시작일자</label>
-        <input id="startDate" type="date">
+        <input id="startDate" type="date" onchange="handleStartDateChange()">
       </div>
       <div class="field">
         <label>종료일자</label>
-        <input id="endDate" type="date">
+     <input id="endDate" type="date" onclick="presetEndDateIfEmpty()" onfocus="presetEndDateIfEmpty()">
       </div>
       <div class="field">
         <label>LOCAL 기준 조회시간</label>
@@ -368,7 +368,46 @@ function normalizeHour_(s) {
 
   return '16:00';
 }
+<script>
+function formatDateToYYYYMMDD(date){
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
 
+function addDaysToDateString(dateStr, days){
+  const dt = new Date(dateStr + 'T00:00:00');
+  dt.setDate(dt.getDate() + days);
+  return formatDateToYYYYMMDD(dt);
+}
+
+function handleStartDateChange(){
+  const startEl = document.getElementById('startDate');
+  const endEl = document.getElementById('endDate');
+
+  if (!startEl.value) return;
+
+  const defaultEnd = addDaysToDateString(startEl.value, 30);
+  endEl.value = defaultEnd;
+
+  // 종료일 최소값도 시작일자로 제한
+  endEl.min = startEl.value;
+}
+
+function presetEndDateIfEmpty(){
+  const startEl = document.getElementById('startDate');
+  const endEl = document.getElementById('endDate');
+
+  if (!startEl.value) return;
+
+  endEl.min = startEl.value;
+
+  if (!endEl.value) {
+    endEl.value = addDaysToDateString(startEl.value, 30);
+  }
+}
+</script>
 function getParams(){
   return {
     airport: document.getElementById('airport').value.trim().toUpperCase(),
@@ -552,6 +591,13 @@ function clearResults(){
   currentRows = [];
   currentParams = {};
   renderRows([]);
+
+  document.getElementById('airport').value = '';
+  document.getElementById('startDate').value = '';
+  document.getElementById('endDate').value = '';
+  document.getElementById('endDate').min = '';
+  document.getElementById('targetLocalTime').value = '';
+
   document.getElementById('metaAirport').textContent = '-';
   document.getElementById('metaLocalTime').textContent = '-';
   document.getElementById('metaPeriod').textContent = '-';

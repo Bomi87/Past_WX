@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1, viewport-fit=cover" />
   <title>Past WX Search</title>
   <style>
     html{
@@ -673,11 +673,16 @@ function openResultModal(){
   const body = modal.querySelector('.result-modal-body');
   modal.classList.add('open');
   document.body.style.overflow = 'hidden';
+
   if (body) {
     body.scrollTop = 0;
     body.scrollLeft = 0;
   }
+
+  const active = document.activeElement;
+  if (active) active.blur();
 }
+
 
 function closeResultModal(){
   const modal = document.getElementById('resultModal');

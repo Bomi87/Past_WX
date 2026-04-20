@@ -354,7 +354,7 @@
       </div>
       <div class="field">
         <label>시작일자</label>
-  <input id="startDate" type="date" onclick="presetStartDateIfEmpty()" onchange="handleStartDateChange()">
+ <input id="startDate" type="date" onchange="handleStartDateChange()">
       </div>
       <div class="field">
         <label>종료일자</label>
@@ -532,6 +532,15 @@ function presetStartDateIfEmpty(){
 
     handleStartDateChange();
   }
+}
+  const startDateEl = document.getElementById('startDate');
+
+if (startDateEl) {
+  startDateEl.addEventListener('focus', function () {
+    if (window.innerWidth <= 768) {
+      presetStartDateIfEmpty();
+    }
+  });
 }
 function handleStartDateChange(){
   const startEl = document.getElementById('startDate');

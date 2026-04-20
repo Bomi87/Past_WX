@@ -354,7 +354,7 @@
       </div>
       <div class="field">
         <label>시작일자</label>
-        <input id="startDate" type="date" onchange="handleStartDateChange()">
+       <input id="startDate" type="date" onclick="presetStartDateIfEmpty()" onfocus="presetStartDateIfEmpty()" onchange="handleStartDateChange()">
       </div>
       <div class="field">
         <label>종료일자</label>
@@ -521,7 +521,16 @@ function addDaysToDateString(dateStr, days){
   dt.setDate(dt.getDate() + days);
   return formatDateToYYYYMMDD(dt);
 }
+function presetStartDateIfEmpty(){
+  const startEl = document.getElementById('startDate');
+  if (!startEl) return;
 
+  if (!startEl.value) {
+    const today = new Date();
+    today.setDate(today.getDate() - 30);
+    startEl.value = formatDateToYYYYMMDD(today);
+  }
+}
 function handleStartDateChange(){
   const startEl = document.getElementById('startDate');
   const endEl = document.getElementById('endDate');

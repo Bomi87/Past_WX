@@ -335,85 +335,74 @@
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="card header-card">
-    <div class="header-top">
-      <div class="header-text">
-        <h1 style="margin:0; font-size:22px;">Historical Airport Weather Analysis</h1>
-        <div class="header-subtitle">시간대별 공항기상 분석</div>
-      </div>
-      <div class="header-icons">✈️ 🌤️</div>
-    </div>
+  <div id="authScreen" style="
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px;
+    background:#f4f7fb;
+    font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Noto Sans KR',Arial,sans-serif;
+    color:#1f2937;
+    font-size:15px;
+    font-weight:700;
+  ">
+    승인 확인 중...
   </div>
 
-  <div class="card">
-    <div class="grid">
-      <div class="field">
-        <label>AIRPORT</label>
-        <input id="airport" maxlength="4" placeholder="RKSI" style="text-transform: uppercase;" oninput="this.value=this.value.toUpperCase()">
+  <div id="appRoot" style="display:none;">
+    <div class="wrap">
+      <div class="card header-card">
+        <div class="header-top">
+          <div class="header-text">
+            <h1 style="margin:0; font-size:22px;">Historical Airport Weather Analysis</h1>
+            <div class="header-subtitle">시간대별 공항기상 분석</div>
+          </div>
+          <div class="header-icons">✈️ 🌤️</div>
+        </div>
       </div>
-      <div class="field">
-        <label>시작일자</label>
- <input id="startDate" type="date" onchange="handleStartDateChange()">
+
+      <div class="card">
+        <div class="grid">
+          <div class="field">
+            <label>AIRPORT</label>
+            <input id="airport" maxlength="4" placeholder="RKSI" style="text-transform: uppercase;" oninput="this.value=this.value.toUpperCase()">
+          </div>
+
+          <div class="field">
+            <label>시작일자</label>
+            <input id="startDate" type="date" onchange="handleStartDateChange()">
+          </div>
+
+          <div class="field">
+            <label>종료일자</label>
+            <input id="endDate" type="date" onclick="presetEndDateIfEmpty()" onfocus="presetEndDateIfEmpty()">
+          </div>
+
+          <div class="field">
+            <label>LOCAL 기준 조회시간</label>
+            <input id="targetLocalTime" type="text" inputmode="numeric" placeholder="hh:mm" value="" onblur="formatTargetLocalTime()" onchange="formatTargetLocalTime()">
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="searchBtn" class="primary" onclick="runSearch()">조회</button>
+          <button class="secondary" onclick="clearResults()">초기화</button>
+          <button id="pdfBtn" class="secondary" onclick="exportResultPdf()" disabled>PDF 저장</button>
+        </div>
+
+        <div id="status" class="status info"></div>
       </div>
-      <div class="field">
-        <label>종료일자</label>
-        <input id="endDate" type="date" onclick="presetEndDateIfEmpty()" onfocus="presetEndDateIfEmpty()">
-      </div>
-      <div class="field">
-        <label>LOCAL 기준 조회시간</label>
-        <input id="targetLocalTime" type="text" inputmode="numeric" placeholder="hh:mm" value="" onblur="formatTargetLocalTime()" onchange="formatTargetLocalTime()">
-      </div>
-    </div>
 
-    <div class="actions">
-      <button id="searchBtn" class="primary" onclick="runSearch()">조회</button>
-      <button class="secondary" onclick="clearResults()">초기화</button>
-      <button id="pdfBtn" class="secondary" onclick="exportResultPdf()" disabled>PDF 저장</button>
-    </div>
+      <div class="card">
+        <div class="meta" style="margin-bottom:12px;">
+          <div>결과 건수: <strong id="rowCount">0</strong></div>
+          <div>공항: <strong id="metaAirport">-</strong></div>
+          <div>기준 LOCAL 시간: <strong id="metaLocalTime">-</strong></div>
+          <div>기간: <strong id="metaPeriod">-</strong></div>
+        </div>
 
-    <div id="status" class="status info"></div>
-  </div>
-
-  <div class="card">
-    <div class="meta" style="margin-bottom:12px;">
-      <div>결과 건수: <strong id="rowCount">0</strong></div>
-      <div>공항: <strong id="metaAirport">-</strong></div>
-      <div>기준 LOCAL 시간: <strong id="metaLocalTime">-</strong></div>
-      <div>기간: <strong id="metaPeriod">-</strong></div>
-    </div>
-
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Date(UTC)</th>
-            <th>UTC</th>
-            <th>Report</th>
-            <th>Phenomena</th>
-            <th>Visibility</th>
-            <th>Wind</th>
-          </tr>
-        </thead>
-        <tbody id="resultBody">
-          <tr><td colspan="7" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</div>
-
-<div id="resultModal" class="result-modal" onclick="handleModalBackdrop(event)">
-  <div class="result-modal-panel">
-    <div class="result-modal-header">
-      <div class="result-modal-title">조회 결과</div>
-      <button class="result-modal-close" onclick="closeResultModal()">닫기</button>
-    </div>
-    <div class="result-modal-body">
-      <div class="modal-meta" id="modalMeta"></div>
-      <div class="modal-zoom">
-        <div class="modal-table-wrap">
+        <div class="table-wrap">
           <table>
             <thead>
               <tr>
@@ -426,15 +415,47 @@
                 <th>Wind</th>
               </tr>
             </thead>
-            <tbody id="modalResultBody">
+            <tbody id="resultBody">
               <tr><td colspan="7" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
+
+    <div id="resultModal" class="result-modal" onclick="handleModalBackdrop(event)">
+      <div class="result-modal-panel">
+        <div class="result-modal-header">
+          <div class="result-modal-title">조회 결과</div>
+          <button class="result-modal-close" onclick="closeResultModal()">닫기</button>
+        </div>
+
+        <div class="result-modal-body">
+          <div class="modal-meta" id="modalMeta"></div>
+          <div class="modal-zoom">
+            <div class="modal-table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>No</th>
+                    <th>Date(UTC)</th>
+                    <th>UTC</th>
+                    <th>Report</th>
+                    <th>Phenomena</th>
+                    <th>Visibility</th>
+                    <th>Wind</th>
+                  </tr>
+                </thead>
+                <tbody id="modalResultBody">
+                  <tr><td colspan="7" style="text-align:center;color:#627d98;">조회 결과가 없습니다.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-</div>
 
 <script>
 const GAS_WEBAPP_URL = 'https://script.google.com/macros/s/AKfycbxe-zKcDq63h4imWUe-YCVB2r1v5M4jkO_w6OzycbJJ0MBmKDfBMCkQHE4chmp1bvuJeA/exec';
@@ -443,6 +464,8 @@ const WX_HIGHLIGHT_CODES = ['TS','GR','GS','FZ','FG','SN','FC','VA','SG','PL','S
 let currentRows = [];
 let currentParams = {};
 let jsonpSeq = 0;
+let PAST_WX_APP_STARTED = false;
+let PAST_WX_EVENTS_BOUND = false;
 
 function hasHighlightedWeather(wxText){
   const s = String(wxText || '').toUpperCase();
@@ -452,6 +475,7 @@ function hasHighlightedWeather(wxText){
 
 function setStatus(message, type='info'){
   const el = document.getElementById('status');
+  if (!el) return;
   el.className = 'status ' + type;
   el.style.display = 'block';
   el.textContent = message;
@@ -464,16 +488,23 @@ function isMobileDevice(){
 function updatePdfButton(){
   const btn = document.getElementById('pdfBtn');
   if (!btn) return;
+
+  if (!PAST_WX_APP_STARTED) {
+    btn.disabled = true;
+    return;
+  }
+
   if (isMobileDevice()) {
     btn.disabled = true;
     return;
   }
+
   btn.disabled = !currentRows.length;
 }
 
 function formatTargetLocalTime(){
   const el = document.getElementById('targetLocalTime');
-  if (!el.value.trim()) return;
+  if (!el || !el.value.trim()) return;
   el.value = normalizeHour_(el.value);
 }
 
@@ -521,6 +552,7 @@ function addDaysToDateString(dateStr, days){
   dt.setDate(dt.getDate() + days);
   return formatDateToYYYYMMDD(dt);
 }
+
 function presetStartDateIfEmpty(){
   const startEl = document.getElementById('startDate');
   if (!startEl) return;
@@ -533,20 +565,12 @@ function presetStartDateIfEmpty(){
     handleStartDateChange();
   }
 }
-  const startDateEl = document.getElementById('startDate');
 
-if (startDateEl) {
-  startDateEl.addEventListener('focus', function () {
-    if (window.innerWidth <= 768) {
-      presetStartDateIfEmpty();
-    }
-  });
-}
 function handleStartDateChange(){
   const startEl = document.getElementById('startDate');
   const endEl = document.getElementById('endDate');
 
-  if (!startEl.value) return;
+  if (!startEl || !endEl || !startEl.value) return;
 
   const defaultEnd = addDaysToDateString(startEl.value, 30);
   endEl.value = defaultEnd;
@@ -557,7 +581,7 @@ function presetEndDateIfEmpty(){
   const startEl = document.getElementById('startDate');
   const endEl = document.getElementById('endDate');
 
-  if (!startEl.value) return;
+  if (!startEl || !endEl || !startEl.value) return;
 
   endEl.min = startEl.value;
 
@@ -689,6 +713,8 @@ function renderRows(rows){
 }
 
 function openResultModal(){
+  if (!PAST_WX_APP_STARTED) return;
+
   const modal = document.getElementById('resultModal');
   const body = modal.querySelector('.result-modal-body');
   modal.classList.add('open');
@@ -703,9 +729,9 @@ function openResultModal(){
   if (active) active.blur();
 }
 
-
 function closeResultModal(){
   const modal = document.getElementById('resultModal');
+  if (!modal) return;
   modal.classList.remove('open');
   document.body.style.overflow = '';
 }
@@ -716,18 +742,15 @@ function handleModalBackdrop(event){
   }
 }
 
-document.addEventListener('keydown', function(e){
-  if (e.key === 'Escape') closeResultModal();
-});
-
-window.addEventListener('resize', updatePdfButton);
-
 async function runSearch(){
+  if (!PAST_WX_APP_STARTED) return;
+
   const btn = document.getElementById('searchBtn');
   if (btn) btn.disabled = true;
 
   const p = getParams();
   const err = validate(p);
+
   if (err){
     setStatus(err, 'error');
     if (btn) btn.disabled = false;
@@ -756,6 +779,8 @@ async function runSearch(){
 }
 
 function clearResults(){
+  if (!PAST_WX_APP_STARTED) return;
+
   currentRows = [];
   currentParams = {};
   renderRows([]);
@@ -769,11 +794,13 @@ function clearResults(){
   document.getElementById('metaAirport').textContent = '-';
   document.getElementById('metaLocalTime').textContent = '-';
   document.getElementById('metaPeriod').textContent = '-';
+
   setStatus('초기화되었습니다.', 'info');
   closeResultModal();
 }
 
 function exportResultPdf(){
+  if (!PAST_WX_APP_STARTED) return;
   if (isMobileDevice()) return;
 
   if (!currentRows.length) {
@@ -810,14 +837,17 @@ function exportResultPdf(){
     margin:0;
     padding:0;
   }
+
   .head{
     margin-bottom:12px;
   }
+
   .title{
     font-size:20px;
     font-weight:700;
     margin-bottom:6px;
   }
+
   .meta{
     display:flex;
     gap:18px;
@@ -826,11 +856,13 @@ function exportResultPdf(){
     color:#486581;
     margin-bottom:12px;
   }
+
   table{
     width:100%;
     border-collapse:collapse;
     table-layout:fixed;
   }
+
   th, td{
     border:1px solid #d9e2ec;
     padding:6px 8px;
@@ -838,9 +870,11 @@ function exportResultPdf(){
     vertical-align:top;
     word-break:break-word;
   }
+
   th{
     background:#f7fafc;
   }
+
   .mono{
     font-family: Consolas, monospace;
     font-size:10px;
@@ -878,6 +912,7 @@ function exportResultPdf(){
 </html>`;
 
   const win = window.open('', '_blank');
+
   if (!win) {
     setStatus('팝업이 차단되었습니다. 팝업 허용 후 다시 시도하세요.', 'error');
     return;
@@ -895,8 +930,57 @@ function exportResultPdf(){
   };
 }
 
-updatePdfButton();
+function bindPastWxEvents() {
+  if (PAST_WX_EVENTS_BOUND) return;
+  PAST_WX_EVENTS_BOUND = true;
+
+  const startDateEl = document.getElementById('startDate');
+
+  if (startDateEl) {
+    startDateEl.addEventListener('focus', function () {
+      if (window.innerWidth <= 768) {
+        presetStartDateIfEmpty();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', function(e){
+    if (!PAST_WX_APP_STARTED) return;
+    if (e.key === 'Escape') closeResultModal();
+  });
+
+  window.addEventListener('resize', updatePdfButton);
+}
+
+function showAuthorizedApp() {
+  const authScreen = document.getElementById('authScreen');
+  const appRoot = document.getElementById('appRoot');
+
+  if (authScreen) authScreen.style.display = 'none';
+  if (appRoot) appRoot.style.display = 'block';
+}
+
+function startPastWxAppAfterAuth() {
+  if (PAST_WX_APP_STARTED) return;
+
+  PAST_WX_APP_STARTED = true;
+  showAuthorizedApp();
+  bindPastWxEvents();
+  updatePdfButton();
+}
+
+(function waitForPortalAuth() {
+  if (window.CURRENT_PORTAL_USER) {
+    startPastWxAppAfterAuth();
+    return;
+  }
+
+  setTimeout(waitForPortalAuth, 200);
+})();
 </script>
+
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://bomi87.github.io/SK-Aviation-portal/common-auth.js"></script>
 
 </body>
 </html>
